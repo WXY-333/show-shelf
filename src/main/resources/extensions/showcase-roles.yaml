@@ -1,0 +1,103 @@
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: role-template-showcase-view
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "展示架"
+    rbac.authorization.halo.run/display-name: "展示架查看"
+    rbac.authorization.halo.run/ui-permissions: '["plugin:showcase:view"]'
+rules:
+  - apiGroups:
+      - api.showcase.halo.run
+    resources:
+      - items
+      - categories
+      - subcategories
+      - settings
+    verbs:
+      - get
+      - list
+  - nonResourceURLs:
+      - /apis/api.showcase.halo.run/v1alpha1/items
+      - /apis/api.showcase.halo.run/v1alpha1/categories
+      - /apis/api.showcase.halo.run/v1alpha1/subcategories
+      - /apis/api.showcase.halo.run/v1alpha1/settings
+      - /apis/api.showcase.halo.run/v1alpha1/admin/items
+      - /apis/api.showcase.halo.run/v1alpha1/admin/categories
+      - /apis/api.showcase.halo.run/v1alpha1/admin/subcategories
+    verbs: ["get"]
+---
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: role-template-showcase-manage
+  labels:
+    halo.run/role-template: "true"
+  annotations:
+    rbac.authorization.halo.run/module: "展示架"
+    rbac.authorization.halo.run/display-name: "展示架管理"
+    rbac.authorization.halo.run/ui-permissions: '["plugin:showcase:manage"]'
+    rbac.authorization.halo.run/dependencies: '["role-template-showcase-view"]'
+rules:
+  - apiGroups:
+      - api.showcase.halo.run
+    resources:
+      - items
+      - categories
+      - subcategories
+      - settings
+    verbs:
+      - create
+      - update
+      - patch
+      - delete
+  - nonResourceURLs:
+      - /apis/api.showcase.halo.run/v1alpha1/items
+      - /apis/api.showcase.halo.run/v1alpha1/items/*
+      - /apis/api.showcase.halo.run/v1alpha1/categories
+      - /apis/api.showcase.halo.run/v1alpha1/categories/*
+      - /apis/api.showcase.halo.run/v1alpha1/subcategories
+      - /apis/api.showcase.halo.run/v1alpha1/subcategories/*
+      - /apis/api.showcase.halo.run/v1alpha1/settings
+      - /apis/api.showcase.halo.run/v1alpha1/admin/items
+      - /apis/api.showcase.halo.run/v1alpha1/admin/categories
+      - /apis/api.showcase.halo.run/v1alpha1/admin/settings
+    verbs: ["create", "update", "patch", "delete"]
+---
+apiVersion: v1alpha1
+kind: Role
+metadata:
+  name: role-template-showcase-anonymous
+  labels:
+    halo.run/role-template: "true"
+    halo.run/hidden: "true"
+    rbac.authorization.halo.run/aggregate-to-anonymous: "true"
+rules:
+  - apiGroups:
+      - api.showcase.halo.run
+    resources:
+      - items
+      - categories
+      - subcategories
+      - settings
+    verbs:
+      - get
+      - list
+  - nonResourceURLs:
+      - /apis/api.showcase.halo.run/v1alpha1/items
+      - /apis/api.showcase.halo.run/v1alpha1/categories
+      - /apis/api.showcase.halo.run/v1alpha1/subcategories
+      - /apis/api.showcase.halo.run/v1alpha1/settings
+    verbs: ["get"]
+  - nonResourceURLs:
+      - /apis/api.showcase.halo.run/v1alpha1/items/like
+    verbs: ["create"]
+  - nonResourceURLs:
+      - /apis/api.showcase.halo.run/v1alpha1/stats
+      - /apis/api.showcase.halo.run/v1alpha1/stats/visit
+    verbs: ["get", "create"]
+  - nonResourceURLs:
+      - /apis/api.showcase.halo.run/v1alpha1/items/*/like
+    verbs: ["create"]

@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+    id "io.freefair.lombok" version "9.2.0"
+    id "run.halo.plugin.devtools" version "0.6.2"
+}
+
+group = 'com.wangxinyang.showcase'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation platform('run.halo.tools.platform:plugin:2.23.0')
+    compileOnly 'run.halo.app:api'
+
+    testImplementation 'run.halo.app:api'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+def testRuntimeJar = tasks.register('testRuntimeJar', Jar) {
+    dependsOn testClasses
+    archiveFileName = 'plugin-showcase-test-runtime.jar'
+    destinationDirectory = file(new File(System.getProperty('java.io.tmpdir'), 'halo-showcase-test'))
+    from sourceSets.main.output
+    from sourceSets.test.output
+}
+
+test {
+    useJUnitPlatform()
+    dependsOn testRuntimeJar
+    // Gradle 9 on Windows cannot load test classes from a classpath containing Chinese paths.
+    // Put only the compiled test classes in a temporary ASCII-path JAR; dependencies stay unchanged.
+    classpath = files(testRuntimeJar.flatMap { it.archiveFile }) + configurations.testRuntimeClasspath
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+tasks.named('generatePluginComponentsIdx') {
+    notCompatibleWithConfigurationCache('This task invokes Task.project at execution time.')
+}
+
+// Keep the user-facing project documentation, source repository, and issue
+// tracker available alongside the published plugin JAR.
+tasks.named('processResources') {
+    from('README.md')
+    from('LICENSE')
+}
+
+halo {
+    version = '2.23'
+}

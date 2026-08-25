@@ -1,0 +1,18 @@
+apiVersion: plugin.halo.run/v1alpha1
+kind: Plugin
+metadata:
+  name: showcase
+spec:
+  enabled: true
+  requires: ">=2.23.0"
+  author:
+    name: Wangxinyang
+  logo: logo.svg
+  displayName: "展示架"
+  description: "公开展示动漫、影视和书籍收藏，支持分类、二级标题、标签、评分、封面、主题色、昼夜模式、背景动效、可选访客统计、匿名评论、外链确认和 Steam 游戏联动。"
+  homepage: /movie
+  repo: https://github.com/WXY-333/show-shelf
+  issues: https://github.com/WXY-333/show-shelf/issues
+  license:
+    - name: "MIT"
+      url: "https://github.com/WXY-333/show-shelf/blob/main/LICENSE"
