@@ -145,7 +145,7 @@ public class ShowcaseEndpoint implements CustomEndpoint {
         var siteFavicon = trim(site.getFavicon(), 2000);
         return new PublicSettings(showcase.getPageTitle(), showcase.getSubtitle(),
             showcase.getOwnerText(), showcase.getThemeColor(), showcase.getEffectEnabled(),
-            showcase.getEffectType(), showcase.getCommentEnabled(), showcase.getSteamEnabled(),
+            showcase.getEffectType(), showcase.getCommentEnabled(), showcase.getDetailCommentEnabled(), showcase.getCommentType(), showcase.getTwikooEnvId(), showcase.getCommentAnonymousEmail(), showcase.getDefaultItemPosition(), showcase.getSteamEnabled(),
             steamStatus.installed(), steamStatus.active(), steamStatus.message(),
             showcase.getHeroGifEnabled(), showcase.getHeroGifUrl(),
             showcase.getVisitorStatsEnabled(),
@@ -161,7 +161,7 @@ public class ShowcaseEndpoint implements CustomEndpoint {
 
     private record PublicSettings(String pageTitle, String subtitle, String ownerText,
                                   String themeColor, Boolean effectEnabled, String effectType,
-                                  Boolean commentEnabled, Boolean steamEnabled,
+                                  Boolean commentEnabled, Boolean detailCommentEnabled, String commentType, String twikooEnvId, Boolean commentAnonymousEmail, String defaultItemPosition, Boolean steamEnabled,
                                   Boolean steamInstalled, Boolean steamActive,
                                   String steamMessage, Boolean heroGifEnabled, String heroGifUrl,
                                   Boolean visitorStatsEnabled,
@@ -575,6 +575,10 @@ public class ShowcaseEndpoint implements CustomEndpoint {
         var effectType = trim(spec.getEffectType(), 20).toLowerCase(java.util.Locale.ROOT);
         spec.setEffectType("stars".equals(effectType) ? "stars" : "sakura");
         if (spec.getCommentEnabled() == null) spec.setCommentEnabled(defaults.getCommentEnabled());
+        if (spec.getDetailCommentEnabled() == null) spec.setDetailCommentEnabled(defaults.getDetailCommentEnabled());
+        spec.setCommentType("twikoo".equalsIgnoreCase(trim(spec.getCommentType(), 20)) ? "twikoo" : "halo");
+        spec.setTwikooEnvId(trim(spec.getTwikooEnvId(), 500));
+        if (spec.getCommentAnonymousEmail() == null) spec.setCommentAnonymousEmail(defaults.getCommentAnonymousEmail());
         if (spec.getSteamEnabled() == null) spec.setSteamEnabled(defaults.getSteamEnabled());
         if (spec.getHeroGifEnabled() == null) spec.setHeroGifEnabled(defaults.getHeroGifEnabled());
         var heroGifUrl = trim(spec.getHeroGifUrl(), 2000);
@@ -592,6 +596,7 @@ public class ShowcaseEndpoint implements CustomEndpoint {
         spec.setContentBackgroundSaturation(clampPercent(spec.getContentBackgroundSaturation(), defaults.getContentBackgroundSaturation()));
         if (spec.getSignatureEnabled() == null) spec.setSignatureEnabled(defaults.getSignatureEnabled());
         spec.setSignatureText(orDefault(trim(spec.getSignatureText(), 240), defaults.getSignatureText()));
+        spec.setDefaultItemPosition("start".equalsIgnoreCase(trim(spec.getDefaultItemPosition(), 10)) ? "start" : "end");
         return spec;
     }
 

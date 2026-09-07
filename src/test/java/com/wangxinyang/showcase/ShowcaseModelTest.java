@@ -30,7 +30,12 @@ class ShowcaseModelTest {
         assertThat(settings.getEffectEnabled()).isTrue();
         assertThat(settings.getEffectType()).isEqualTo("sakura");
         assertThat(settings.getCommentEnabled()).isTrue();
+        assertThat(settings.getDetailCommentEnabled()).isTrue();
         assertThat(settings.getSteamEnabled()).isFalse();
+        assertThat(settings.getDefaultItemPosition()).isEqualTo("end");
+        assertThat(settings.getCommentType()).isEqualTo("halo");
+        assertThat(settings.getTwikooEnvId()).isEmpty();
+        assertThat(settings.getCommentAnonymousEmail()).isFalse();
         assertThat(new ShowcaseItem().getSpec().getPublished()).isTrue();
         assertThat(new ShowcaseCategory().getSpec().getVisible()).isTrue();
     }

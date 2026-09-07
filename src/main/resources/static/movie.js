@@ -4,7 +4,22 @@
   const STEAM_API = '/apis/api.steam.timxs.com/v1alpha1';
   const STEAM_CATEGORY = '__steam__';
   const DEFAULT_THEME_COLOR = '#E96F9D';
-  const state = { items: [], categories: [], subcategories: [], settings: {}, active: 'all', keyword: '', steamGames: null, steamLoading: false, steamError: '' };
+    const viewModeKey = 'showcase.frontend.viewMode.v1';
+  const cardSizeKey = 'showcase.frontend.cardSize.v1';
+  const readFrontendViewMode = () => {
+    try { return localStorage.getItem(viewModeKey) || 'card'; } catch (_) { return 'card'; }
+  };
+  const persistFrontendViewMode = (mode) => {
+    try { localStorage.setItem(viewModeKey, mode); } catch (_) {}
+  };
+  const readFrontendCardSize = () => {
+    try { return localStorage.getItem(cardSizeKey) || 'md'; } catch (_) { return 'md'; }
+  };
+  const persistFrontendCardSize = (size) => {
+    try { localStorage.setItem(cardSizeKey, size); } catch (_) {}
+  };
+  const state = { items: [], categories: [], subcategories: [], settings: {}, active: 'all', keyword: '', steamGames: null, steamLoading: false, steamError: '', viewMode: readFrontendViewMode(), cardSize: readFrontendCardSize() };
+  const commentObservers = new WeakMap();
   const $ = (selector) => document.querySelector(selector);
   const grid = $('#showcase-grid');
   const tabs = $('#category-tabs');
@@ -234,11 +249,11 @@
   }
 
   function syncCommentTheme() {
-    const section = $('#showcase-comments');
-    const mount = $('#showcase-comment-widget');
-    if (!section || !mount) return;
+    const sections = [...document.querySelectorAll('.showcase-comments, .detail-comments')];
+    const mounts = [...document.querySelectorAll('.showcase-comment-widget, .detail-comment-widget')];
+    if (!sections.length && !mounts.length) return;
     const dark = document.documentElement.dataset.showcaseMode === 'dark';
-    section.dataset.colorScheme = dark ? 'dark' : 'light';
+    sections.forEach((section) => { section.dataset.colorScheme = dark ? 'dark' : 'light'; });
     const variables = {
       '--halo-cw-primary-1-color': 'var(--accent-bg)',
       '--halo-cw-primary-3-color': 'var(--soft)',
@@ -253,7 +268,7 @@
       '--halo-cw-base-font-family': '"PingFang SC","Microsoft YaHei",system-ui,sans-serif',
       '--halo-cw-base-font-size': '15px'
     };
-    [section, mount, ...mount.querySelectorAll('comment-widget')].forEach((node) => {
+    [...sections, ...mounts, ...mounts.flatMap((mount) => [...mount.querySelectorAll('comment-widget')])].forEach((node) => {
       Object.entries(variables).forEach(([name, value]) => node.style.setProperty(name, value));
       if (node.matches?.('comment-widget')) {
         node.dataset.colorScheme = dark ? 'dark' : 'light';
@@ -268,6 +283,9 @@
   // Halo's editor is rendered asynchronously inside one or more shadow roots.
   // Keep the native editor, but adapt its placeholder text on this page only.
   function customizeNativeCommentForms(mount) {
+    if (state.settings.commentAnonymousEmail) {
+      setupAnonymousEmailHandler(mount);
+    }
     if (!mount) return false;
     let changed = false;
     const visit = (root) => {
@@ -312,51 +330,51 @@
     return changed;
   }
 
+  async function setupCommentMount(mount, target, unavailableMessage = true) {
+    if (!mount) return;
+    commentObservers.get(mount)?.disconnect();
+    const stylesheetUrl = '/plugins/PluginCommentWidget/assets/static/index.css';
+    if (!document.querySelector(`link[href="${stylesheetUrl}"]`)) {
+      const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = stylesheetUrl; link.dataset.showcaseCommentStyle = 'true'; document.head.append(link);
+    }
+    try {
+      const { init } = await import('/plugins/PluginCommentWidget/assets/static/comment-widget.js');
+      mount.replaceChildren();
+      init(`#${mount.id}`, target);
+      customizeNativeCommentForms(mount);
+      let checks = 0;
+      const timer = window.setInterval(() => {
+        const found = customizeNativeCommentForms(mount); checks += 1;
+        if (found || checks >= 80) window.clearInterval(timer);
+      }, 250);
+      const observer = new MutationObserver(() => { customizeNativeCommentForms(mount); syncCommentTheme(); });
+      observer.observe(mount, { childList: true, subtree: true });
+      commentObservers.set(mount, observer);
+      syncCommentTheme(); window.setTimeout(syncCommentTheme, 500);
+    } catch (error) {
+      console.warn('[Showcase] Halo 评论组件加载失败。', error);
+      if (unavailableMessage) {
+        const message = document.createElement('p'); message.className = 'comment-unavailable';
+        message.innerHTML = '<span><strong>评论区暂时无法加载</strong>请确认 Halo 官方“评论组件”插件已经安装并启用。</span>';
+        mount.replaceChildren(message);
+      }
+    }
+  }
+
   async function setupComments(settings) {
     const section = $('#showcase-comments');
     const mount = $('#showcase-comment-widget');
     if (settings.commentEnabled === false) {
       section.hidden = true;
+      commentObservers.get(mount)?.disconnect();
       mount.replaceChildren();
       return;
     }
     section.hidden = false;
-    const stylesheetUrl = '/plugins/PluginCommentWidget/assets/static/index.css';
-    if (!document.querySelector(`link[href="${stylesheetUrl}"]`)) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = stylesheetUrl;
-      link.dataset.showcaseCommentStyle = 'true';
-      document.head.append(link);
-    }
-    try {
-      const { init } = await import('/plugins/PluginCommentWidget/assets/static/comment-widget.js');
-      mount.replaceChildren();
-      init('#showcase-comment-widget', {
-        group: 'showcase.halo.run',
-        kind: 'ShowcaseSettings',
-        name: 'showcase-settings'
-      });
-      customizeNativeCommentForms(mount);
-      let nativeFormChecks = 0;
-      const nativeFormTimer = window.setInterval(() => {
-        const found = customizeNativeCommentForms(mount);
-        nativeFormChecks += 1;
-        if (found || nativeFormChecks >= 80) window.clearInterval(nativeFormTimer);
-      }, 250);
-      const observer = new MutationObserver(() => {
-        customizeNativeCommentForms(mount);
-        syncCommentTheme();
-      });
-      observer.observe(mount, { childList: true, subtree: true });
-      syncCommentTheme();
-      window.setTimeout(syncCommentTheme, 500);
-    } catch (error) {
-      console.warn('[Showcase] Halo 评论组件加载失败。', error);
-      const message = document.createElement('p');
-      message.className = 'comment-unavailable';
-      message.innerHTML = '<span><strong>评论区暂时无法加载</strong>请确认 Halo 官方“评论组件”插件已经安装并启用。</span>';
-      mount.replaceChildren(message);
+    if (settings.commentType === 'twikoo' && settings.twikooEnvId) {
+      setupTwikooMount(mount, '/movie');
+    } else {
+      setupCommentMount(mount, { group: 'showcase.halo.run', kind: 'ShowcaseSettings', name: 'showcase-settings' });
     }
   }
 
@@ -504,6 +522,154 @@
     });
   }
 
+
+  function createListItem(item) {
+    const spec = item.spec || {};
+    const category = categoryOf(spec.category);
+    const row = document.createElement('article');
+    row.className = 'showcase-list-item';
+    row.tabIndex = 0;
+    row.setAttribute('aria-label', `查看《${spec.title || '未命名'}》详情`);
+
+    const thumb = document.createElement('div');
+    thumb.className = 'list-item-thumb';
+    const cover = safeImage(spec.cover);
+    if (cover) {
+      const img = document.createElement('img');
+      img.src = cover;
+      img.alt = `${spec.title || ''}封面`;
+      img.loading = 'lazy';
+      img.addEventListener('error', () => img.replaceWith(placeholder()));
+      thumb.append(img);
+    } else {
+      thumb.append(placeholder());
+    }
+
+    const main = document.createElement('div');
+    main.className = 'list-item-main';
+
+    const titleLine = document.createElement('div');
+    titleLine.className = 'list-item-title-line';
+    const title = document.createElement('h3');
+    title.title = spec.title || '';
+    text(title, spec.title || '未命名');
+    titleLine.append(title);
+    if (category) {
+      const catBadge = document.createElement('span');
+      catBadge.className = 'list-item-category';
+      text(catBadge, `${category?.spec?.icon || '🌸'} ${category?.spec?.displayName || ''}`);
+      titleLine.append(catBadge);
+    }
+
+    const tagsContainer = document.createElement('div');
+    tagsContainer.className = 'list-item-tags';
+    const tags = Array.isArray(spec.tags) ? spec.tags.filter(Boolean).slice(0, 5) : [];
+    tags.forEach((t) => {
+      const tagSpan = document.createElement('span');
+      text(tagSpan, t);
+      tagsContainer.append(tagSpan);
+    });
+
+    main.append(titleLine, tagsContainer);
+
+    const meta = document.createElement('div');
+    meta.className = 'list-item-meta';
+    if (spec.status) {
+      const statusSpan = document.createElement('span');
+      statusSpan.className = 'list-item-status';
+      text(statusSpan, spec.status);
+      meta.append(statusSpan);
+    }
+    if (Number(spec.score) > 0) {
+      const scoreSpan = document.createElement('span');
+      scoreSpan.className = 'list-item-score';
+      scoreSpan.innerHTML = `★ <b>${spec.score}</b>`;
+      meta.append(scoreSpan);
+    }
+
+    row.append(thumb, main, meta);
+    row.addEventListener('click', () => openDetail(item));
+    row.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openDetail(item);
+      }
+    });
+    return row;
+  }
+
+  function applyGridClasses(targetGrid) {
+    if (!targetGrid) return;
+    targetGrid.classList.remove('grid-size-sm', 'grid-size-md', 'grid-size-lg', 'showcase-list-mode');
+    targetGrid.dataset.viewMode = state.viewMode;
+    if (state.viewMode === 'list') {
+      targetGrid.classList.add('showcase-list-mode');
+    } else {
+      targetGrid.classList.add(`grid-size-${state.cardSize}`);
+      targetGrid.dataset.cardSize = state.cardSize;
+    }
+  }
+
+  async function loadTwikooScript() {
+    if (window.twikoo) return window.twikoo;
+    return new Promise((resolve, reject) => {
+      if (document.querySelector('script[data-showcase-twikoo]')) {
+        const check = setInterval(() => {
+          if (window.twikoo) { clearInterval(check); resolve(window.twikoo); }
+        }, 50);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.staticfile.net/twikoo/1.6.40/twikoo.all.min.js';
+      script.dataset.showcaseTwikoo = 'true';
+      script.onload = () => resolve(window.twikoo);
+      script.onerror = () => {
+        const fb = document.createElement('script');
+        fb.src = 'https://cdn.jsdelivr.net/npm/twikoo@1.6.40/dist/twikoo.all.min.js';
+        fb.onload = () => resolve(window.twikoo);
+        fb.onerror = reject;
+        document.head.append(fb);
+      };
+      document.head.append(script);
+    });
+  }
+
+  function setupAnonymousEmailHandler(rootNode) {
+    const handleForm = (form) => {
+      if (form.dataset.anonBound) return;
+      form.dataset.anonBound = 'true';
+      form.addEventListener('submit', () => {
+        const mailInput = form.querySelector('input[type="email"], input[name="mail"], .tk-meta-input[type="email"]');
+        if (mailInput && !mailInput.value.trim()) {
+          mailInput.value = `anon_${Math.random().toString(36).slice(2, 8)}@anonymous.local`;
+        }
+      }, true);
+    };
+    const observer = new MutationObserver(() => {
+      rootNode.querySelectorAll('.tk-comment-form, form, comment-form').forEach(handleForm);
+    });
+    observer.observe(rootNode, { childList: true, subtree: true });
+    rootNode.querySelectorAll('.tk-comment-form, form, comment-form').forEach(handleForm);
+  }
+
+  async function setupTwikooMount(mount, path) {
+    if (!mount || !state.settings.twikooEnvId) return;
+    try {
+      const twikoo = await loadTwikooScript();
+      mount.replaceChildren();
+      await twikoo.init({
+        envId: state.settings.twikooEnvId,
+        el: '#' + mount.id,
+        path: path || location.pathname
+      });
+      if (state.settings.commentAnonymousEmail) {
+        setupAnonymousEmailHandler(mount);
+      }
+    } catch (e) {
+      console.warn('[Showcase] Twikoo 加载失败', e);
+      mount.innerHTML = '<p class="comment-unavailable"><span><strong>评论区无法加载</strong>请检查 Twikoo 环境 ID 设置。</span></p>';
+    }
+  }
   function createCard(item) {
     const spec = item.spec || {};
     const category = categoryOf(spec.category);
@@ -606,10 +772,31 @@
     return state.subcategories.find((item) => item.metadata.name === name);
   }
 
+  function itemSortKey(item) {
+    const spec = item.spec || {};
+    const category = categoryOf(spec.category);
+    const subcategory = subcategoryOf(spec.subcategory);
+    const categoryPriority = Number(category?.spec?.priority) || 0;
+    const subcategoryPriority = spec.subcategory ? Number(subcategory?.spec?.priority) || 0 : -1;
+    const itemPriority = Number(spec.priority) || 0;
+    const created = Date.parse(item.metadata?.creationTimestamp || '') || Number.MAX_SAFE_INTEGER;
+    return [categoryPriority, subcategoryPriority, itemPriority, created, item.metadata?.name || ''];
+  }
+
+  function sortItems(items) {
+    return [...items].sort((a, b) => {
+      const left = itemSortKey(a); const right = itemSortKey(b);
+      for (let index = 0; index < 4; index += 1) {
+        if (left[index] !== right[index]) return left[index] - right[index];
+      }
+      return String(left[4]).localeCompare(String(right[4]));
+    });
+  }
+
   function renderGroupedItems(items) {
     const groups = [];
     const grouped = new Map();
-    items.forEach((item) => {
+    sortItems(items).forEach((item) => {
       const key = item.spec?.subcategory || '__default__';
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key).push(item);
@@ -625,10 +812,42 @@
         heading.append(title, description); section.append(heading);
       }
       const groupGrid = document.createElement('div'); groupGrid.className = 'showcase-grid';
-      groupGrid.append(...groupItems.map(createCard)); section.append(groupGrid); groups.push(section);
+      applyGridClasses(groupGrid);
+      const itemRenderer = state.viewMode === 'list' ? createListItem : createCard;
+      groupGrid.append(...groupItems.map(itemRenderer)); section.append(groupGrid); groups.push(section);
     });
     grid.classList.add('grouped-grid');
     grid.replaceChildren(...groups);
+  }
+
+  function renderAllGroupedItems(items) {
+    const grouped = new Map();
+    sortItems(items).forEach((item) => {
+      const key = item.spec?.category || '__uncategorized__';
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(item);
+    });
+    const sections = [];
+    grouped.forEach((groupItems, categoryName) => {
+      if (!groupItems.length) return;
+      const section = document.createElement('section');
+      section.className = 'subcategory-section category-overview-section';
+      const category = categoryOf(categoryName);
+      const heading = document.createElement('div');
+      heading.className = 'subcategory-heading';
+      const title = document.createElement('h2');
+      text(title, `${category?.spec?.icon || '✦'} ${category?.spec?.displayName || '未分类'}`);
+      heading.append(title);
+      const groupGrid = document.createElement('div');
+      groupGrid.className = 'showcase-grid';
+      applyGridClasses(groupGrid);
+      const itemRenderer = state.viewMode === 'list' ? createListItem : createCard;
+      groupGrid.append(...groupItems.map(itemRenderer));
+      section.append(heading, groupGrid);
+      sections.push(section);
+    });
+    grid.classList.add('grouped-grid');
+    grid.replaceChildren(...sections);
   }
 
   function steamNotice(title, message, kind = 'warning') {
@@ -728,9 +947,10 @@
   function renderCards() {
     if (state.active === STEAM_CATEGORY) { renderSteamCards(); return; }
     grid.classList.remove('steam-grid');
-    const items = visibleItems();
+    applyGridClasses(grid);
+    const items = sortItems(visibleItems());
     grid.classList.toggle('grouped-grid', state.active !== 'all');
-    if (state.active !== 'all') renderGroupedItems(items); else grid.replaceChildren(...items.map(createCard));
+    if (state.active !== 'all') renderGroupedItems(items); else renderAllGroupedItems(items);
     empty.hidden = items.length > 0;
   }
 
@@ -764,6 +984,20 @@
         navigateExternal(target);
       };
     });
+    const detailComments = dialog.querySelector('#detail-comments');
+    const detailMount = dialog.querySelector('#detail-comment-widget');
+    const detailCommentsEnabled = state.settings.detailCommentEnabled !== false;
+    detailComments.hidden = !detailCommentsEnabled;
+    if (detailCommentsEnabled) {
+      if (state.settings.commentType === 'twikoo' && state.settings.twikooEnvId) {
+        setupTwikooMount(detailMount, `/movie/${item.metadata.name}`);
+      } else {
+        setupCommentMount(detailMount, { group: 'showcase.halo.run', kind: 'ShowcaseItem', name: item.metadata.name });
+      }
+    } else {
+      commentObservers.get(detailMount)?.disconnect();
+      detailMount.replaceChildren();
+    }
     dialog.querySelector('.dialog-layout article').scrollTop = 0;
     dialog.showModal(); document.body.style.overflow = 'hidden';
   }
@@ -782,10 +1016,44 @@
     window.open(url, '_blank', 'noopener,noreferrer');
   });
   $('#search-input').addEventListener('input', (event) => { state.keyword = event.target.value; renderCards(); });
+  function syncViewControls() {
+    const isCard = state.viewMode === 'card';
+    $('#front-view-card')?.classList.toggle('active', isCard);
+    $('#front-view-card')?.setAttribute('aria-pressed', String(isCard));
+    $('#front-view-list')?.classList.toggle('active', !isCard);
+    $('#front-view-list')?.setAttribute('aria-pressed', String(!isCard));
+    const sizeGroup = $('#front-card-size');
+    if (sizeGroup) sizeGroup.hidden = !isCard;
+    document.querySelectorAll('.front-size-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.size === state.cardSize);
+    });
+  }
+
+  $('#front-view-card')?.addEventListener('click', () => {
+    state.viewMode = 'card';
+    persistFrontendViewMode('card');
+    syncViewControls();
+    renderCards();
+  });
+  $('#front-view-list')?.addEventListener('click', () => {
+    state.viewMode = 'list';
+    persistFrontendViewMode('list');
+    syncViewControls();
+    renderCards();
+  });
+  document.querySelectorAll('.front-size-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.cardSize = btn.dataset.size || 'md';
+      persistFrontendCardSize(state.cardSize);
+      syncViewControls();
+      renderCards();
+    });
+  });
+
 
   Promise.all([get('/items'), get('/categories'), get('/subcategories'), get('/settings')]).then(([items, categories, subcategories, settings]) => {
     state.items = items || []; state.categories = categories || []; state.subcategories = subcategories || []; state.settings = settings || {};
-    setupDayNightToggle(settings.themeColor);
+    setupDayNightToggle(settings.themeColor); syncViewControls();
     applySiteIdentity(settings);
     applyPageEffect(settings);
     applyHeroGif(settings);
