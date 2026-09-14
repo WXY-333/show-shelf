@@ -610,28 +610,33 @@
     }
   }
 
+  let twikooPromise = null;
   async function loadTwikooScript() {
     if (window.twikoo) return window.twikoo;
-    return new Promise((resolve, reject) => {
-      if (document.querySelector('script[data-showcase-twikoo]')) {
-        const check = setInterval(() => {
-          if (window.twikoo) { clearInterval(check); resolve(window.twikoo); }
-        }, 50);
-        return;
-      }
+    if (twikooPromise) return twikooPromise;
+    let primaryUrl = '';
+    try {
+      const configured = new URL(String(state.settings?.twikooJsUrl || '').trim());
+      if (configured.protocol === 'http:' || configured.protocol === 'https:') primaryUrl = configured.href;
+    } catch (_) {}
+    primaryUrl ||= 'https://cdn.staticfile.net/twikoo/1.6.40/twikoo.all.min.js';
+    const fallbackUrl = 'https://cdn.jsdelivr.net/npm/twikoo@1.6.40/dist/twikoo.all.min.js';
+    const load = (url) => new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = 'https://cdn.staticfile.net/twikoo/1.6.40/twikoo.all.min.js';
+      script.src = url;
       script.dataset.showcaseTwikoo = 'true';
-      script.onload = () => resolve(window.twikoo);
-      script.onerror = () => {
-        const fb = document.createElement('script');
-        fb.src = 'https://cdn.jsdelivr.net/npm/twikoo@1.6.40/dist/twikoo.all.min.js';
-        fb.onload = () => resolve(window.twikoo);
-        fb.onerror = reject;
-        document.head.append(fb);
-      };
+      script.onload = () => window.twikoo ? resolve(window.twikoo) : reject(new Error('Twikoo 脚本未定义 window.twikoo'));
+      script.onerror = () => reject(new Error(`无法加载 Twikoo 脚本：${url}`));
       document.head.append(script);
     });
+    twikooPromise = load(primaryUrl).catch((error) => {
+      if (primaryUrl === fallbackUrl) throw error;
+      return load(fallbackUrl);
+    }).catch((error) => {
+      twikooPromise = null;
+      throw error;
+    });
+    return twikooPromise;
   }
 
   function setupAnonymousEmailHandler(rootNode) {
@@ -651,9 +656,24 @@
     observer.observe(rootNode, { childList: true, subtree: true });
     rootNode.querySelectorAll('.tk-comment-form, form, comment-form').forEach(handleForm);
   }
+  function scrollToTwikooHash(mount) {
+    const hash = location.hash;
+    if (!hash || !hash.startsWith('#c')) return;
+    let id = hash.slice(1);
+    try { id = decodeURIComponent(id); } catch (_) {}
+    let attempts = 0;
+    const seek = () => {
+      const target = document.getElementById(id);
+      if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+      if (++attempts < 20) window.setTimeout(seek, 250);
+    };
+    seek();
+  }
+
 
   async function setupTwikooMount(mount, path) {
     if (!mount || !state.settings.twikooEnvId) return;
+    const mountParent = mount.parentElement;
     try {
       const twikoo = await loadTwikooScript();
       mount.replaceChildren();
@@ -662,12 +682,15 @@
         el: '#' + mount.id,
         path: path || location.pathname
       });
+      const renderedMount = mountParent?.querySelector('.twikoo') || mount;
+      renderedMount.id = mount.id;
       if (state.settings.commentAnonymousEmail) {
-        setupAnonymousEmailHandler(mount);
+        setupAnonymousEmailHandler(renderedMount);
       }
+      scrollToTwikooHash(renderedMount);
     } catch (e) {
       console.warn('[Showcase] Twikoo 加载失败', e);
-      mount.innerHTML = '<p class="comment-unavailable"><span><strong>评论区无法加载</strong>请检查 Twikoo 环境 ID 设置。</span></p>';
+      mount.innerHTML = '<p class="comment-unavailable"><span><strong>评论区无法加载</strong>请检查 Twikoo 配置或脚本地址。</span></p>';
     }
   }
   function createCard(item) {
@@ -953,6 +976,42 @@
     if (state.active !== 'all') renderGroupedItems(items); else renderAllGroupedItems(items);
     empty.hidden = items.length > 0;
   }
+  async function openStartupPermalink() {
+    const path = location.pathname.replace(/\/$/, '') || '/movie';
+    const itemMatch = path.match(/^\/movie\/([^/]+)$/);
+    if (itemMatch) {
+      let name = itemMatch[1];
+      try { name = decodeURIComponent(name); } catch (_) {}
+      const item = state.items.find((candidate) => candidate.metadata?.name === name);
+      if (item) openDetail(item);
+      return;
+    }
+    if (path !== '/movie' || !location.hash || !state.settings.twikooEnvId) return;
+    const commentId = location.hash.slice(1);
+    if (!commentId) return;
+    try {
+      const response = await fetch(state.settings.twikooEnvId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ event: 'GET_RECENT_COMMENTS', includeReply: true, pageSize: 100 })
+      });
+      if (!response.ok) throw new Error(`Twikoo 请求失败：${response.status}`);
+      const result = await response.json();
+      const comments = Array.isArray(result?.data) ? result.data : [];
+      const comment = comments.find((candidate) => String(candidate?.id || '') === commentId);
+      if (!comment?.url) return;
+      const commentPath = new URL(comment.url, location.origin).pathname.replace(/\/$/, '');
+      const match = commentPath.match(/^\/movie\/([^/]+)$/);
+      if (!match) return;
+      let name = match[1];
+      try { name = decodeURIComponent(name); } catch (_) {}
+      const item = state.items.find((candidate) => candidate.metadata?.name === name);
+      if (item) openDetail(item);
+    } catch (error) {
+      console.warn('[Showcase] 无法解析评论链接', error);
+    }
+  }
+
 
   function openDetail(item) {
     const spec = item.spec || {}; const category = categoryOf(spec.category);
@@ -988,6 +1047,8 @@
     const detailMount = dialog.querySelector('#detail-comment-widget');
     const detailCommentsEnabled = state.settings.detailCommentEnabled !== false;
     detailComments.hidden = !detailCommentsEnabled;
+    dialog.querySelector('.dialog-layout article').scrollTop = 0;
+    dialog.showModal(); document.body.style.overflow = 'hidden';
     if (detailCommentsEnabled) {
       if (state.settings.commentType === 'twikoo' && state.settings.twikooEnvId) {
         setupTwikooMount(detailMount, `/movie/${item.metadata.name}`);
@@ -998,13 +1059,12 @@
       commentObservers.get(detailMount)?.disconnect();
       detailMount.replaceChildren();
     }
-    dialog.querySelector('.dialog-layout article').scrollTop = 0;
-    dialog.showModal(); document.body.style.overflow = 'hidden';
+    try { history.replaceState(null, '', `/movie/${item.metadata.name}${location.hash}`); } catch (_) {}
   }
 
   dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
-  dialog.addEventListener('close', () => { document.body.style.overflow = ''; });
+  dialog.addEventListener('close', () => { document.body.style.overflow = ''; try { history.replaceState(null, '', '/movie'); } catch (_) {} });
   externalConfirm?.addEventListener('click', (event) => { if (event.target === externalConfirm) externalConfirm.close('cancel'); });
   $('#external-confirm-continue')?.addEventListener('click', () => {
     if (!pendingExternalUrl) return;
@@ -1065,6 +1125,7 @@
     document.title = `${settings.pageTitle || '我的展示架'} - ${settings.siteName || '展示架'}`;
     text($('#item-count'), state.items.length); text($('#category-count'), state.categories.length + (settings.steamEnabled === true ? 1 : 0));
     $('#loading').remove(); renderTabs(); renderCards();
+    openStartupPermalink();
   }).catch((error) => {
     console.error('[Showcase]', error); $('#loading').remove(); empty.hidden = false;
     text(empty.querySelector('h2'), '展示架暂时没有打开'); text(empty.querySelector('p'), '请稍后刷新页面再试。');

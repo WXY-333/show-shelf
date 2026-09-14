@@ -35,6 +35,7 @@ class ShowcaseModelTest {
         assertThat(settings.getDefaultItemPosition()).isEqualTo("end");
         assertThat(settings.getCommentType()).isEqualTo("halo");
         assertThat(settings.getTwikooEnvId()).isEmpty();
+        assertThat(settings.getTwikooJsUrl()).isEqualTo(ShowcaseSettings.DEFAULT_TWIKOO_JS_URL);
         assertThat(settings.getCommentAnonymousEmail()).isFalse();
         assertThat(new ShowcaseItem().getSpec().getPublished()).isTrue();
         assertThat(new ShowcaseCategory().getSpec().getVisible()).isTrue();

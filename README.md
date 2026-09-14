@@ -7,7 +7,7 @@
 ## 基本信息
 
 - 插件名称：展示架
-- 当前版本：1.6.2
+- 当前版本：1.6.3
 - 插件标识：`showcase`
 - Halo 要求：2.23.0 及以上
 - 当前测试环境：Halo 2.23.2
@@ -89,7 +89,7 @@
 
 ## 安装方法
 
-1. 构建或下载 `plugin-showcase-1.6.2.jar`。
+1. 构建或下载 `plugin-showcase-1.6.3.jar`。
 2. 进入 Halo Console 的“插件”页面。
 3. 点击“安装插件”并上传 JAR 文件。
 4. 安装完成后启动“展示架”插件。
@@ -149,7 +149,7 @@ Linux 或 macOS：
 构建产物：
 
 ```text
-build/libs/plugin-showcase-1.6.2.jar
+build/libs/plugin-showcase-1.6.3.jar
 ```
 
 ## 项目结构
@@ -242,6 +242,12 @@ Steam 插件未安装、未启用或运行异常时，后台会显示依赖状�
 - 切换动漫、书籍和游戏分类时会自动清理旧的分组布局状态，不需要刷新页面。
 - `/movie` 页面和已发布内容对访客公开，访客无需登录即可查看详情并切换白天/黑夜模式。
 
+## 1.6.3 发布信息
+
+- 评论区 Twikoo 客户端地址支持自定义：页面设置页可填写任意 http/https 的 Twikoo JS 外链，留空时自动使用默认地址。
+- 默认 Twikoo JS 地址优先使用 `https://cdn.staticfile.net/twikoo/1.6.40/twikoo.all.min.js`，加载失败时自动回退到 jsDelivr 的 `https://cdn.jsdelivr.net/npm/twikoo@1.6.40/dist/twikoo.all.min.js`。
+- 修复评论深链：支持直接打开某条评论所属条目的详情弹窗，旧版 hash-only 评论链接会自动从 Twikoo 最近评论中匹配对应条目后跳转。
+
 ## 1.6.2 发布信息
 
 - 后台新增 Bangumi 一键填入：支持 `bgm.tv`、`bangumi.tv`、`chii.in` 条目链接及纯数字 ID。
@@ -257,4 +263,4 @@ Steam 插件未安装、未启用或运行异常时，后台会显示依赖状�
 
 问题反馈：<https://github.com/WXY-333/show-shelf/issues>
 
-构建产物：`build/libs/plugin-showcase-1.6.2.jar`
+构建产物：`build/libs/plugin-showcase-1.6.3.jar`

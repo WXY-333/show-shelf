@@ -45,7 +45,7 @@
       };
       const state = {
         tab: 'items', loading: true, categoryFilter: 'all', itemViewMode: readViewMode(), pendingOrder: null, savingOrder: false, items: [], categories: [], subcategories: [],
-        settings: { pageTitle: '', subtitle: '', ownerText: '', themeColor: DEFAULT_THEME_COLOR, effectEnabled: true, effectType: 'sakura', commentEnabled: true, detailCommentEnabled: true, commentWidgetInstalled: false, commentWidgetActive: false, commentWidgetMessage: '', steamEnabled: false, steamInstalled: false, steamActive: false, steamMessage: '', heroGifEnabled: true, heroGifUrl: '/plugins/showcase/assets/static/gif.gif', visitorStatsEnabled: false, heroBackgroundEnabled: false, heroBackgroundType: 'image', heroBackgroundUrl: '', heroBackgroundOpacity: 28, heroBackgroundSaturation: 100, contentBackgroundEnabled: false, contentBackgroundType: 'image', contentBackgroundUrl: '', contentBackgroundOpacity: 18, contentBackgroundSaturation: 100, signatureEnabled: true, signatureText: 'Keep discovering beautiful stories', defaultItemPosition: 'end', commentType: 'halo', twikooEnvId: '', commentAnonymousEmail: false },
+        settings: { pageTitle: '', subtitle: '', ownerText: '', themeColor: DEFAULT_THEME_COLOR, effectEnabled: true, effectType: 'sakura', commentEnabled: true, detailCommentEnabled: true, commentWidgetInstalled: false, commentWidgetActive: false, commentWidgetMessage: '', steamEnabled: false, steamInstalled: false, steamActive: false, steamMessage: '', heroGifEnabled: true, heroGifUrl: '/plugins/showcase/assets/static/gif.gif', visitorStatsEnabled: false, heroBackgroundEnabled: false, heroBackgroundType: 'image', heroBackgroundUrl: '', heroBackgroundOpacity: 28, heroBackgroundSaturation: 100, contentBackgroundEnabled: false, contentBackgroundType: 'image', contentBackgroundUrl: '', contentBackgroundOpacity: 18, contentBackgroundSaturation: 100, signatureEnabled: true, signatureText: 'Keep discovering beautiful stories', defaultItemPosition: 'end', commentType: 'halo', twikooEnvId: '', twikooJsUrl: 'https://cdn.staticfile.net/twikoo/1.6.40/twikoo.all.min.js', commentAnonymousEmail: false },
         itemDraft: null, categoryDraft: null, subcategoryDraft: null, saving: false, confirmation: null, expandedGroups: readExpandedGroups()
       };
 
@@ -307,6 +307,10 @@
                 <label><span>Twikoo 环境 ID (envId) *</span>
                   <input name="twikooEnvId" value="${esc(s.twikooEnvId || '')}" placeholder="例如：https://twikoo.example.com 或腾讯云环境 ID" maxlength="500" ${canManage ? '' : 'disabled'}>
                   <small class="sc-field-help">填写 Twikoo 服务的 Vercel 地址、自建服务 URL 或腾讯云环境 ID。</small>
+                </label>
+                <label><span>Twikoo 客户端 JS 地址（选填）</span>
+                  <input name="twikooJsUrl" value="${esc(s.twikooJsUrl || '')}" placeholder="留空使用默认地址，例如：https://cdn.jsdelivr.net/npm/twikoo@1.6.44/dist/twikoo.all.min.js" maxlength="2000" ${canManage ? '' : 'disabled'}>
+                  <small class="sc-field-help">当 Twikoo 云函数升级到新版本时，可在此填入匹配的 JS 脚本地址；留空则使用默认版本。</small>
                 </label>
               </div>
               <div class="sc-comment-anon-box">
@@ -1004,6 +1008,7 @@
           defaultItemPosition,
           commentType: state.settings.commentType,
           twikooEnvId: state.settings.twikooEnvId,
+          twikooJsUrl: state.settings.twikooJsUrl,
           commentAnonymousEmail: state.settings.commentAnonymousEmail
         };
         try {
@@ -1018,7 +1023,7 @@
 
       async function saveSettings(event) {
         event.preventDefault(); const form = new FormData(root.querySelector('#sc-settings-form') || event.currentTarget); const mediaForm = root.querySelector('#sc-media-settings-form'); const media = mediaForm ? new FormData(mediaForm) : form;
-        const payload = { pageTitle: form.get('pageTitle'), subtitle: form.get('subtitle'), ownerText: form.get('ownerText'), themeColor: normalizeHex(form.get('themeColor')) || DEFAULT_THEME_COLOR, effectEnabled: form.get('effectEnabled') === 'on', effectType: form.get('effectType') === 'stars' ? 'stars' : 'sakura', commentEnabled: form.get('commentEnabled') === 'on', detailCommentEnabled: form.get('detailCommentEnabled') === 'on', steamEnabled: form.get('steamEnabled') === 'on', heroGifEnabled: form.get('heroGifEnabled') === 'on', heroGifUrl: form.get('heroGifUrl'), signatureEnabled: form.get('signatureEnabled') === 'on', signatureText: form.get('signatureText'), heroBackgroundEnabled: media.get('heroBackgroundEnabled') === 'on', heroBackgroundType: media.get('heroBackgroundType'), heroBackgroundUrl: media.get('heroBackgroundUrl'), heroBackgroundOpacity: Number(media.get('heroBackgroundOpacity') || 28), heroBackgroundSaturation: Number(media.get('heroBackgroundSaturation') || 100), contentBackgroundEnabled: media.get('contentBackgroundEnabled') === 'on', contentBackgroundType: media.get('contentBackgroundType'), contentBackgroundUrl: media.get('contentBackgroundUrl'), contentBackgroundOpacity: Number(media.get('contentBackgroundOpacity') || 18), contentBackgroundSaturation: Number(media.get('contentBackgroundSaturation') || 100), defaultItemPosition: state.settings.defaultItemPosition || 'end', commentType: form.get('commentType') === 'twikoo' ? 'twikoo' : 'halo', twikooEnvId: String(form.get('twikooEnvId') || '').trim(), commentAnonymousEmail: form.get('commentAnonymousEmail') === 'on' };
+        const payload = { pageTitle: form.get('pageTitle'), subtitle: form.get('subtitle'), ownerText: form.get('ownerText'), themeColor: normalizeHex(form.get('themeColor')) || DEFAULT_THEME_COLOR, effectEnabled: form.get('effectEnabled') === 'on', effectType: form.get('effectType') === 'stars' ? 'stars' : 'sakura', commentEnabled: form.get('commentEnabled') === 'on', detailCommentEnabled: form.get('detailCommentEnabled') === 'on', steamEnabled: form.get('steamEnabled') === 'on', heroGifEnabled: form.get('heroGifEnabled') === 'on', heroGifUrl: form.get('heroGifUrl'), signatureEnabled: form.get('signatureEnabled') === 'on', signatureText: form.get('signatureText'), heroBackgroundEnabled: media.get('heroBackgroundEnabled') === 'on', heroBackgroundType: media.get('heroBackgroundType'), heroBackgroundUrl: media.get('heroBackgroundUrl'), heroBackgroundOpacity: Number(media.get('heroBackgroundOpacity') || 28), heroBackgroundSaturation: Number(media.get('heroBackgroundSaturation') || 100), contentBackgroundEnabled: media.get('contentBackgroundEnabled') === 'on', contentBackgroundType: media.get('contentBackgroundType'), contentBackgroundUrl: media.get('contentBackgroundUrl'), contentBackgroundOpacity: Number(media.get('contentBackgroundOpacity') || 18), contentBackgroundSaturation: Number(media.get('contentBackgroundSaturation') || 100), defaultItemPosition: state.settings.defaultItemPosition || 'end', commentType: form.get('commentType') === 'twikoo' ? 'twikoo' : 'halo', twikooEnvId: String(form.get('twikooEnvId') || '').trim(), twikooJsUrl: String(form.get('twikooJsUrl') || '').trim(), commentAnonymousEmail: form.get('commentAnonymousEmail') === 'on' };
         payload.visitorStatsEnabled = form.get('visitorStatsEnabled') === 'on';
         try {
           const saved = await request('put', '/admin/settings', payload);
