@@ -183,6 +183,17 @@ Linux 或 macOS：
 - **问题反馈：** <https://github.com/WXY-333/show-shelf/issues>
 - **演示站点：** <https://wangxinyang.top/movie>
 
+## 项目信息
+- **插件名称：** 展示架（Plugin Showcase）
+- **当前版本：** 1.7.0
+- **插件标识：** showcase
+- **原作者：** Wangxinyang
+- **贡献者：** [魔皇地狱MHDY2233](https://github.com/mhdy2233)（为本项目提供功能改进）
+- **开源协议：** MIT
+- **源码仓库：** <https://github.com/WXY-333/show-shelf>
+- **问题反馈：** <https://github.com/WXY-333/show-shelf/issues>
+- **演示站点：** <https://wangxinyang.top/movie>
+
 ## 许可证
 
 本项目基于 [MIT License](LICENSE) 开源。
