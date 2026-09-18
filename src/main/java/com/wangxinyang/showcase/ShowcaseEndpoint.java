@@ -613,7 +613,8 @@ public class ShowcaseEndpoint implements CustomEndpoint {
             showcase.getSignatureEnabled(), showcase.getSignatureText(),
             siteName, siteLogo, siteFavicon,
             commentWidgetStatus.installed(), commentWidgetStatus.active(), commentWidgetStatus.message(),
-            commentWidgetNextStatus.installed(), commentWidgetNextStatus.active(), commentWidgetNextStatus.message());
+            commentWidgetNextStatus.installed(), commentWidgetNextStatus.active(), commentWidgetNextStatus.message(),
+            showcase.getTmdbApiKey(), showcase.getDefaultItemPosition());
     }
 
     private record PublicSettings(String pageTitle, String subtitle, String ownerText,
@@ -633,7 +634,7 @@ public class ShowcaseEndpoint implements CustomEndpoint {
                                   Boolean commentWidgetInstalled, Boolean commentWidgetActive,
                                   String commentWidgetMessage,
                                   Boolean commentWidgetNextInstalled, Boolean commentWidgetNextActive,
-                                  String commentWidgetNextMessage) {
+                                  String commentWidgetNextMessage, String tmdbApiKey, String defaultItemPosition) {
     }
 
     private SteamStatus steamStatus(Plugin plugin) {
@@ -1244,6 +1245,7 @@ public class ShowcaseEndpoint implements CustomEndpoint {
         if (spec.getSignatureEnabled() == null) spec.setSignatureEnabled(defaults.getSignatureEnabled());
         spec.setSignatureText(orDefault(trim(spec.getSignatureText(), 240), defaults.getSignatureText()));
         spec.setDefaultItemPosition("start".equalsIgnoreCase(trim(spec.getDefaultItemPosition(), 10)) ? "start" : "end");
+        spec.setTmdbApiKey(trim(spec.getTmdbApiKey(), 200));
         return spec;
     }
 

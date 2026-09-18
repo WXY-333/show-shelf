@@ -41,6 +41,10 @@
 .sc-view-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border:none;border-radius:6px;background:transparent;color:var(--sc-muted);font-size:12px;cursor:pointer;transition:all .15s ease}
 .sc-view-btn:hover{color:var(--sc-ink)}
 .sc-view-btn.active{background:#fff;color:#b03467;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.sc-item-search{flex:1;min-width:180px;display:flex;align-items:center}
+.sc-search-input{width:100%;min-height:36px;padding:7px 13px;border:1px solid var(--sc-line);border-radius:20px;background:#fff;color:var(--sc-ink);font-size:12.5px;transition:border-color .18s ease,box-shadow .18s ease}
+.sc-search-input:focus{outline:0;border-color:#d77a9e;box-shadow:0 0 0 3px #fff0f6}
+.sc-search-input::placeholder{color:var(--sc-muted)}
 
 /* Compact List View (图片---标题) */
 .sc-compact-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}

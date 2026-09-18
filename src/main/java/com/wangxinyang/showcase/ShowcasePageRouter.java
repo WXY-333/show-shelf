@@ -1,36 +1,43 @@
 package com.wangxinyang.showcase;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
+import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Mono;
+import run.halo.app.theme.TemplateNameResolver;
 
 @Configuration(proxyBeanMethods = false)
 public class ShowcasePageRouter {
 
+    private final TemplateNameResolver templateNameResolver;
+
+    public ShowcasePageRouter(TemplateNameResolver templateNameResolver) {
+        this.templateNameResolver = templateNameResolver;
+    }
+
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE + 100)
-    RouterFunction<ServerResponse> moviePageRouter() throws IOException {
-        var resource = new ClassPathResource("static/movie.html");
-        var html = resource.getContentAsString(StandardCharsets.UTF_8);
+    RouterFunction<ServerResponse> moviePageRouter() {
         return RouterFunctions.route()
-            .GET("/movie", request -> ServerResponse.ok()
-                .contentType(MediaType.TEXT_HTML)
-                .cacheControl(CacheControl.noCache())
-                .bodyValue(html))
+            .GET("/movie", this::renderMovie)
             .GET("/movie/", request -> ServerResponse.permanentRedirect(java.net.URI.create("/movie")).build())
-            .GET("/movie/{item}", request -> ServerResponse.ok()
+            .GET("/movie/{item}", this::renderMovie)
+            .build();
+    }
+
+    private Mono<ServerResponse> renderMovie(ServerRequest request) {
+        return templateNameResolver.resolveTemplateNameOrDefault(request.exchange(), "movie")
+            .flatMap(templateName -> ServerResponse.ok()
                 .contentType(MediaType.TEXT_HTML)
                 .cacheControl(CacheControl.noCache())
-                .bodyValue(html))
-            .build();
+                .render(templateName, Map.of()));
     }
 }

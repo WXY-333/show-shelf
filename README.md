@@ -2,7 +2,7 @@
 
 一个面向 [Halo 2](https://github.com/halo-dev/halo) 的独立收藏展示插件，通过 **/movie** 公开展示动漫、影视、书籍、游戏及其他个人收藏。
 
-![Version](https://img.shields.io/badge/Version-1.7.0-1f6feb?style=flat-square) ![Halo](https://img.shields.io/badge/Halo-%E2%89%A5%202.23.0-0a84f7?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)
+![Version](https://img.shields.io/badge/Version-1.7.1-1f6feb?style=flat-square) ![Halo](https://img.shields.io/badge/Halo-%E2%89%A5%202.23.0-0a84f7?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)
 
 [在线演示](https://wangxinyang.top/movie) ｜ [使用教程](https://www.wangxinyang.top/archives/halo-zhan-shi-jia-da-zao-zi-ji-de-zhuan-shu-shou-cang-zhan-shi-ye-mian) ｜ [版本下载](https://github.com/WXY-333/show-shelf/releases) ｜ [问题反馈](https://github.com/WXY-333/show-shelf/issues)
 
@@ -40,6 +40,7 @@
 ### 前台展示与交互
 
 - 使用独立的 **/movie** 页面，不依赖当前 Halo 主题结构和样式。
+- 页面使用 Halo 原生模板渲染，支持已启用插件的 head/body 原生注入（如 Live2D），不抓取博客首页。
 - 支持分类、二级标题及标题、简介、感受、标签关键词搜索。
 - 支持卡片与列表视图切换；卡片提供小、大、大大三档尺寸，默认四列布局。
 - 卡片封面保持固定比例，详情弹窗支持长内容独立滚动。
@@ -86,7 +87,7 @@
 
 ## 安装与升级
 
-1. 在 Halo 应用市场搜索“展示架”或“Showcase”，或从 [Releases](https://github.com/WXY-333/show-shelf/releases) 下载 **plugin-showcase-1.7.0.jar**。
+1. 在 Halo 应用市场搜索“展示架”或“Showcase”，或从 [Releases](https://github.com/WXY-333/show-shelf/releases) 下载 **plugin-showcase-1.7.1.jar**。
 2. 进入“插件 → 安装插件”，上传 JAR 并启动展示架。
 3. 打开“内容 → 展示架”完成分类、内容和页面设置。
 4. 访问 **/movie** 查看公开页面。
@@ -147,14 +148,23 @@ Linux 或 macOS：
 
     ./gradlew clean test build --no-daemon
 
-构建产物：**build/libs/plugin-showcase-1.7.0.jar**
+构建产物：**build/libs/plugin-showcase-1.7.1.jar**
 
 ## 项目结构
 
     src/main/java/                  Java 插件逻辑、API、路由与数据模型
     src/main/resources/console/    Halo Console 管理界面
-    src/main/resources/static/     /movie 页面 HTML、CSS、JS 与动画资源
+    src/main/resources/templates/movie.html  /movie 页面模板
+    src/main/resources/static/     CSS、JS 与动画资源
     src/main/resources/extensions/ 权限角色与静态资源代理规则
+
+## 1.7.1 版本概要
+
+- 新增后台展示内容搜索框，支持按标题、简介、观看感受、状态和标签实时过滤。
+- 新增 TMDB 链接解析：内容编辑弹窗中粘贴 themoviedb.org 电影或剧集链接即可一键填入封面、标题、评分、简介和标签。
+- TMDB API Key 在后台设置中持久化保存，仅通过登录后的管理接口读取，匿名公开接口不返回该字段。
+- `/movie` 页面改用 Halo 原生模板渲染，已启用插件的 head/body 资源（如 Live2D 看板娘）可正常注入显示。
+- 修复后台设置的“新增展示内容默认位置”保存后不回显的问题。
 
 ## 1.7.0 版本概要
 
@@ -164,7 +174,6 @@ Linux 或 macOS：
 - 新增匿名邮箱轻量适配，优化评论切换、主题色、移动端详情和表情面板。
 
 精简发布说明见 [1.7.0版本更新说明.md](1.7.0版本更新说明.md)。
-
 ## 注意事项
 
 - 外部链接仅允许 HTTP 或 HTTPS；外部封面和背景必须允许浏览器公开访问。
@@ -175,7 +184,7 @@ Linux 或 macOS：
 ## 项目信息
 
 - **插件名称：** 展示架（Plugin Showcase）
-- **当前版本：** 1.7.0
+- **当前版本：** 1.7.1
 - **插件标识：** showcase
 - **作者：** Wangxinyang
 - **开源协议：** MIT
