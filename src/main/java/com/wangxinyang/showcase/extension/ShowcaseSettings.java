@@ -46,6 +46,7 @@ public class ShowcaseSettings extends AbstractExtension {
         spec.setSignatureEnabled(true);
         spec.setSignatureText("Keep discovering beautiful stories");
         spec.setDefaultItemPosition("end");
+        spec.setTmdbApiKey("");
         return spec;
     }
 
@@ -80,5 +81,6 @@ public class ShowcaseSettings extends AbstractExtension {
         private Boolean signatureEnabled;
         private String signatureText;
         private String defaultItemPosition;
+        private String tmdbApiKey;
     }
 }

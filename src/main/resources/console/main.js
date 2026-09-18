@@ -105,8 +105,8 @@
         try { window.localStorage.setItem(viewModeStorageKey, mode); } catch (_) { /* local storage may be unavailable */ }
       };
       const state = {
-        tab: 'items', loading: true, categoryFilter: 'all', itemViewMode: readViewMode(), pendingOrder: null, savingOrder: false, items: [], categories: [], subcategories: [],
-        settings: { pageTitle: '', subtitle: '', ownerText: '', themeColor: DEFAULT_THEME_COLOR, effectEnabled: true, effectType: 'sakura', commentEnabled: true, detailCommentEnabled: true, commentWidgetInstalled: false, commentWidgetActive: false, commentWidgetMessage: '', steamEnabled: false, steamInstalled: false, steamActive: false, steamMessage: '', heroGifEnabled: true, heroGifUrl: '/plugins/showcase/assets/static/gif.gif', visitorStatsEnabled: false, heroBackgroundEnabled: false, heroBackgroundType: 'image', heroBackgroundUrl: '', heroBackgroundOpacity: 28, heroBackgroundSaturation: 100, contentBackgroundEnabled: false, contentBackgroundType: 'image', contentBackgroundUrl: '', contentBackgroundOpacity: 18, contentBackgroundSaturation: 100, signatureEnabled: true, signatureText: 'Keep discovering beautiful stories', defaultItemPosition: 'end', commentType: 'halo', commentWidgetNextInstalled: false, commentWidgetNextActive: false, commentWidgetNextMessage: '', twikooEnvId: '', twikooJsUrl: 'https://cdn.staticfile.net/twikoo/1.6.40/twikoo.all.min.js', commentAnonymousEmail: false },
+        tab: 'items', loading: true, categoryFilter: 'all', itemKeyword: '', itemViewMode: readViewMode(), pendingOrder: null, savingOrder: false, items: [], categories: [], subcategories: [],
+        settings: { pageTitle: '', subtitle: '', ownerText: '', themeColor: DEFAULT_THEME_COLOR, effectEnabled: true, effectType: 'sakura', commentEnabled: true, detailCommentEnabled: true, commentWidgetInstalled: false, commentWidgetActive: false, commentWidgetMessage: '', steamEnabled: false, steamInstalled: false, steamActive: false, steamMessage: '', heroGifEnabled: true, heroGifUrl: '/plugins/showcase/assets/static/gif.gif', visitorStatsEnabled: false, heroBackgroundEnabled: false, heroBackgroundType: 'image', heroBackgroundUrl: '', heroBackgroundOpacity: 28, heroBackgroundSaturation: 100, contentBackgroundEnabled: false, contentBackgroundType: 'image', contentBackgroundUrl: '', contentBackgroundOpacity: 18, contentBackgroundSaturation: 100, signatureEnabled: true, signatureText: 'Keep discovering beautiful stories', defaultItemPosition: 'end', commentType: 'halo', commentWidgetNextInstalled: false, commentWidgetNextActive: false, commentWidgetNextMessage: '', twikooEnvId: '', twikooJsUrl: 'https://cdn.staticfile.net/twikoo/1.6.40/twikoo.all.min.js', commentAnonymousEmail: false, tmdbApiKey: '' },
         itemDraft: null, categoryDraft: null, subcategoryDraft: null, templateDraft: null, templates: [], saving: false, confirmation: null, expandedGroups: readExpandedGroups(), pendingTemplateFieldScroll: false
       };
 
@@ -250,7 +250,8 @@
           <button type="button" class="sc-view-btn ${state.itemViewMode === 'list' ? 'active' : ''}" data-view-mode="list" title="紧凑列表视图（图片---标题）">☰ 列表</button>
         </div>`;
 
-        const toolbarHtml = `<div class="sc-toolbar">${categoryFilterHtml()}${viewSwitcherHtml}</div>`;
+        const searchHtml = `<div class="sc-item-search"><input type="search" id="sc-item-search" class="sc-search-input" placeholder="🔍 搜索标题 / 简介 / 标签 / 状态" value="${esc(state.itemKeyword)}" autocomplete="off"></div>`;
+        const toolbarHtml = `<div class="sc-toolbar">${categoryFilterHtml()}${searchHtml}${viewSwitcherHtml}</div>`;
 
         const cardHtml = (item) => {
           const s = item.spec || {}; const category = state.categories.find((c) => c.metadata.name === s.category);
@@ -278,6 +279,18 @@
             const [categoryName] = key.split('::');
             return categoryName === state.categoryFilter;
           });
+        }
+        if (state.itemKeyword) {
+          const kw = state.itemKeyword;
+          const matches = (item) => {
+            const s = item.spec || {};
+            const hay = [s.title, s.description, s.impression, s.status, ...(Array.isArray(s.tags) ? s.tags : [])]
+              .filter(Boolean).join(' ').toLowerCase();
+            return hay.includes(kw);
+          };
+          allGroups = allGroups
+            .map(({ key, items }) => ({ key, items: items.filter(matches) }))
+            .filter(({ items }) => items.length);
         }
 
         const sections = allGroups.length ? allGroups.map(({ key, items }) => {
@@ -440,6 +453,15 @@
                 </label>
               </div>
             </div>
+            <div class="sc-effect-settings">
+              <div class="sc-effect-head">
+                <div>
+                  <strong>TMDB API Key</strong>
+                  <small>用于内容编辑弹窗中的 TMDB 链接解析。到 themoviedb.org 账号设置的 API 页面申请（v3 auth 的 API Key）。</small>
+                </div>
+              </div>
+              <label class="sc-tmdb-key-field"><span>API Key</span><input name="tmdbApiKey" type="text" maxlength="200" value="${esc(s.tmdbApiKey || '')}" placeholder="TMDB API Key（v3）" autocomplete="off" ${canManage ? '' : 'disabled'}></label>
+            </div>
             ${canManage ? '<button class="sc-primary" type="submit">保存后台设置</button>' : ''}
           </form>
         </section>`;
@@ -455,8 +477,9 @@
         const effectiveTemplateName = d.template || (currentCategory && currentCategory.spec && currentCategory.spec.template) || '';
         const isStandardTemplate = !effectiveTemplateName || effectiveTemplateName === 'standard' || effectiveTemplateName === 'preset-standard';
         const bgmImporterHtml = isStandardTemplate ? `<div class="sc-bgm-importer"><label><span>解析 Bangumi (bgm.tv)</span><div class="sc-bgm-row"><input id="sc-bgm-url" type="text" placeholder="链接或 ID，如 https://bgm.tv/subject/…" autocomplete="off"><button type="button" class="sc-bgm-btn" data-action="parse-bgm">一键填入</button></div></label><small class="sc-field-help">粘贴条目链接或数字 ID，一键自动填入封面、标题、评分、简介及标签。</small></div>` : '';
+        const tmdbImporterHtml = isStandardTemplate ? `<div class="sc-bgm-importer sc-tmdb-importer"><label><span>解析 TMDB (themoviedb.org)</span><div class="sc-bgm-row"><input id="sc-tmdb-url" type="text" placeholder="链接，如 https://www.themoviedb.org/movie/12345" autocomplete="off"><button type="button" class="sc-bgm-btn" data-action="parse-tmdb">一键填入</button></div></label><small class="sc-field-help">粘贴电影 (movie) 或剧集 (tv) 链接，一键填入封面、标题、评分、简介及标签。需先在“后台设置”填写 TMDB API Key。</small></div>` : '';
         return `<div class="sc-modal${attachmentSelectorOpen.value ? ' sc-modal-behind' : ''}" role="dialog" aria-modal="true" aria-label="${d._name ? '编辑展示内容' : '添加展示内容'}"><div class="sc-modal-card wide"><header><div><small>CONTENT EDITOR</small><h2>${d._name ? '编辑展示内容' : '添加展示内容'}</h2></div><button type="button" data-action="close-modal">×</button></header>
-          <form id="sc-item-form"><input type="hidden" name="priority" value="${esc(d.priority ?? 0)}"><div class="sc-form-grid"><div class="sc-cover-editor"><div class="sc-preview">${d.cover ? `<img src="${esc(d.cover)}" alt="封面预览">` : '<span>🌸<small>封面预览</small></span>'}</div><div class="sc-cover-actions"><button type="button" class="sc-upload" data-action="select-cover">从 Halo 附件库选择</button>${d.cover ? '<button type="button" class="sc-clear-cover" data-action="clear-cover">清除封面</button>' : ''}</div><label><span>或粘贴封面 URL</span><input id="sc-cover-url" name="cover" value="${esc(d.cover)}" placeholder="https://…"></label>${bgmImporterHtml}</div>
+          <form id="sc-item-form"><input type="hidden" name="priority" value="${esc(d.priority ?? 0)}"><div class="sc-form-grid"><div class="sc-cover-editor"><div class="sc-preview">${d.cover ? `<img src="${esc(d.cover)}" alt="封面预览">` : '<span>🌸<small>封面预览</small></span>'}</div><div class="sc-cover-actions"><button type="button" class="sc-upload" data-action="select-cover">从 Halo 附件库选择</button>${d.cover ? '<button type="button" class="sc-clear-cover" data-action="clear-cover">清除封面</button>' : ''}</div><label><span>或粘贴封面 URL</span><input id="sc-cover-url" name="cover" value="${esc(d.cover)}" placeholder="https://…"></label>${bgmImporterHtml}${tmdbImporterHtml}</div>
           <div class="sc-fields"><label><span>标题 *</span><input name="title" maxlength="120" value="${esc(d.title)}" required autofocus></label><div class="sc-two"><label><span>分类 *</span><select name="category" required>${categoryOptions}</select></label><label><span>二级标题</span><select name="subcategory"><option value="">默认区域</option>${subcategoryOptions}</select></label></div><div class="sc-template-fields-host" data-template-host></div><label class="sc-likes-field"><span>点赞数量</span><input name="likes" type="number" min="0" max="2147483647" step="1" inputmode="numeric" value="${esc(d.likes || 0)}"><small class="sc-field-help">可手动调整前台点赞累计数量，访客点赞后会继续在此基础上累加。</small></label><div class="sc-standard-fields" data-standard-fields><div class="sc-two"><label><span>观看状态</span><input name="status" maxlength="30" value="${esc(d.status || '已看完')}"></label><label class="sc-score-field"><span>个人评分（0-10）</span><input class="sc-score-input" name="score" type="number" min="0" max="10" step="0.1" inputmode="decimal" value="${esc(d.score ?? 0)}" placeholder="例如：9.6"><small class="sc-field-help">支持输入一位小数，例如 9.6。</small></label></div>
           <label><span>作品简介</span><textarea name="description" rows="4" maxlength="3000">${esc(d.description)}</textarea></label><label><span>观看后感受</span><textarea name="impression" rows="5" maxlength="5000" placeholder="记录触动你的台词、人物或片段…">${esc(d.impression)}</textarea></label>
           <label><span>观看链接（选填）</span><input name="watchUrl" type="url" maxlength="2000" value="${esc(d.watchUrl)}" placeholder="https://…"><small class="sc-field-help">填写后，详情中会显示“去观看”按钮；留空则不显示该按钮。</small></label><label><span>其他链接（选填）</span><input name="externalUrl" type="url" maxlength="2000" value="${esc(d.externalUrl || '')}" placeholder="https://…"><small class="sc-field-help">填写后，详情中显示一个受主题色控制的“打开其他链接”卡片。</small></label><label><span>封面标签（可选）</span><input name="tags" maxlength="180" value="${esc((d.tags || []).slice(0, 6).join(', '))}" placeholder="例如：治愈、校园、恋爱"><small class="sc-field-help">多个标签用逗号分隔，最多填写 6 个。默认和大尺寸每行显示 3 个；电脑端六列只显示最前面 2 个且每行 1 个，手机端六列不显示封面标签。</small></label></div><label class="sc-check"><input name="published" type="checkbox" ${d.published !== false ? 'checked' : ''}><span>发布到前台 /movie</span></label></div></div>
@@ -592,6 +615,12 @@
           persistViewMode(button.dataset.viewMode);
           render();
         }));
+        root.querySelector('#sc-item-search')?.addEventListener('input', (event) => {
+          state.itemKeyword = String(event.target.value || '').trim().toLowerCase();
+          render();
+          const box = root.querySelector('#sc-item-search');
+          if (box) { box.focus(); const end = box.value.length; box.setSelectionRange(end, end); }
+        });
         root.querySelector('#sc-admin-settings-form')?.addEventListener('submit', saveAdminSettings);
         root.querySelectorAll('input[name="defaultItemPosition"]').forEach((input) => input.addEventListener('change', () => {
           root.querySelectorAll('.sc-position-options label').forEach((label) => label.classList.toggle('selected', label.contains(input)));
@@ -615,6 +644,12 @@
           if (event.key === 'Enter') {
             event.preventDefault();
             parseBgmSubject();
+          }
+        });
+        root.querySelector('#sc-tmdb-url')?.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            parseTmdbSubject();
           }
         });
         root.querySelector('#sc-item-form select[name="category"]')?.addEventListener('change', (event) => {
@@ -970,6 +1005,7 @@
           return;
         }
         if (name === 'parse-bgm') { await parseBgmSubject(); return; }
+        if (name === 'parse-tmdb') { await parseTmdbSubject(); return; }
         if (name === 'new-item') {
           attachmentSelectorOpen.value = false;
           state.saving = false;
@@ -1222,6 +1258,83 @@
         }
       }
 
+      async function parseTmdbSubject() {
+        const input = root.querySelector('#sc-tmdb-url');
+        const btn = root.querySelector('[data-action="parse-tmdb"]');
+        const raw = String(input?.value || '').trim();
+        if (!raw) {
+          notify('warning', '请先输入 TMDB 链接，如 https://www.themoviedb.org/movie/12345');
+          input?.focus();
+          return;
+        }
+        const match = raw.match(/(movie|tv)\/(\d+)/);
+        if (!match) {
+          notify('warning', '未识别到有效的 TMDB 链接，请粘贴 movie 或 tv 链接，如 https://www.themoviedb.org/movie/12345');
+          return;
+        }
+        const type = match[1];
+        const id = match[2];
+        const key = String(state.settings.tmdbApiKey || '').trim();
+        if (!key) {
+          notify('warning', '请先在“后台设置”中填写 TMDB API Key');
+          return;
+        }
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = '解析中…';
+        }
+        try {
+          const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${encodeURIComponent(key)}&language=zh-CN`);
+          if (!res.ok) {
+            throw new Error(`TMDB 返回错误状态 ${res.status}`);
+          }
+          const data = await res.json();
+          const title = data.title || data.name || '';
+          const cover = data.poster_path ? `https://image.tmdb.org/t/p/original${data.poster_path}` : '';
+          const score = Number(data.vote_average) > 0 ? Number(data.vote_average).toFixed(1) : '';
+          const description = data.overview || '';
+          const tags = Array.isArray(data.genres) ? data.genres.map((g) => g.name).filter(Boolean).slice(0, 6) : [];
+
+          const form = root.querySelector('#sc-item-form');
+          if (form) {
+            if (cover) {
+              const coverInput = form.querySelector('#sc-cover-url');
+              if (coverInput) coverInput.value = cover;
+              updateCoverPreview(cover);
+            }
+            if (title) {
+              const titleInput = form.querySelector('input[name="title"]');
+              if (titleInput) titleInput.value = title;
+            }
+            if (score) {
+              const scoreInput = form.querySelector('input[name="score"]');
+              if (scoreInput) scoreInput.value = score;
+            }
+            if (description) {
+              const descInput = form.querySelector('textarea[name="description"]');
+              if (descInput) descInput.value = description;
+            }
+            if (tags.length) {
+              const tagsInput = form.querySelector('input[name="tags"]');
+              if (tagsInput) tagsInput.value = tags.join(', ');
+            }
+            const extInput = form.querySelector('input[name="externalUrl"]');
+            if (extInput && (!extInput.value || extInput.value.includes('themoviedb.org'))) {
+              extInput.value = `https://www.themoviedb.org/${type}/${id}`;
+            }
+          }
+          syncItemDraftFromForm();
+          notify('success', `已成功解析并填入《${title || id}》`);
+        } catch (err) {
+          notify('error', `解析失败：${err.message || '网络或接口异常'}`);
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = '一键填入';
+          }
+        }
+      }
+
       async function saveItem(event) {
         event.preventDefault(); const form = new FormData(event.currentTarget); const old = state.itemDraft;
         const category = String(form.get('category') || '');
@@ -1323,7 +1436,8 @@
           commentType: ['halo', 'haloNext', 'twikoo'].includes(state.settings.commentType) ? state.settings.commentType : 'halo',
           twikooEnvId: state.settings.twikooEnvId,
           twikooJsUrl: state.settings.twikooJsUrl,
-          commentAnonymousEmail: state.settings.commentAnonymousEmail
+          commentAnonymousEmail: state.settings.commentAnonymousEmail,
+          tmdbApiKey: String(form.get('tmdbApiKey') || '').trim()
         };
         try {
           const saved = await request('put', '/admin/settings', payload);
@@ -1358,6 +1472,7 @@
         event.preventDefault(); const form = new FormData(root.querySelector('#sc-settings-form') || event.currentTarget); const mediaForm = root.querySelector('#sc-media-settings-form'); const media = mediaForm ? new FormData(mediaForm) : form;
         const payload = { pageTitle: form.get('pageTitle'), subtitle: form.get('subtitle'), ownerText: form.get('ownerText'), themeColor: normalizeHex(form.get('themeColor')) || DEFAULT_THEME_COLOR, effectEnabled: form.get('effectEnabled') === 'on', effectType: form.get('effectType') === 'stars' ? 'stars' : 'sakura', commentEnabled: form.get('commentEnabled') === 'on', detailCommentEnabled: form.get('detailCommentEnabled') === 'on', steamEnabled: form.get('steamEnabled') === 'on', heroGifEnabled: form.get('heroGifEnabled') === 'on', heroGifUrl: form.get('heroGifUrl'), signatureEnabled: form.get('signatureEnabled') === 'on', signatureText: form.get('signatureText'), heroBackgroundEnabled: media.get('heroBackgroundEnabled') === 'on', heroBackgroundType: media.get('heroBackgroundType'), heroBackgroundUrl: media.get('heroBackgroundUrl'), heroBackgroundOpacity: Number(media.get('heroBackgroundOpacity') || 28), heroBackgroundSaturation: Number(media.get('heroBackgroundSaturation') || 100), contentBackgroundEnabled: media.get('contentBackgroundEnabled') === 'on', contentBackgroundType: media.get('contentBackgroundType'), contentBackgroundUrl: media.get('contentBackgroundUrl'), contentBackgroundOpacity: Number(media.get('contentBackgroundOpacity') || 18), contentBackgroundSaturation: Number(media.get('contentBackgroundSaturation') || 100), defaultItemPosition: state.settings.defaultItemPosition || 'end', commentType: (() => { const v = form.get('commentType'); return ['halo', 'haloNext', 'twikoo'].includes(v) ? v : 'halo'; })(), twikooEnvId: String(form.get('twikooEnvId') || '').trim(), twikooJsUrl: String(form.get('twikooJsUrl') || '').trim(), commentAnonymousEmail: form.get('commentAnonymousEmail') === 'on' };
         payload.visitorStatsEnabled = form.get('visitorStatsEnabled') === 'on';
+        payload.tmdbApiKey = state.settings.tmdbApiKey;
         try {
           const saved = await request('put', '/admin/settings', payload);
           // Preserve explicit false values when either or both comment
