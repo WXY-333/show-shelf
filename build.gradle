@@ -54,6 +54,7 @@ tasks.named('generatePluginComponentsIdx') {
 // tracker available alongside the published plugin JAR.
 tasks.named('processResources') {
     from('README.md')
+    from('REST-API.md')
     from('LICENSE')
 }
 

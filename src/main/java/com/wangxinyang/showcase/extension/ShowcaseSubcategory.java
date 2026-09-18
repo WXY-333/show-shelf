@@ -18,7 +18,7 @@ public class ShowcaseSubcategory extends AbstractExtension {
         private String displayName;
         private String description;
         private String icon = "✦";
-        private Integer priority = 0;
+        private Integer priority = 1;
         private Boolean visible = true;
     }
 }

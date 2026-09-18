@@ -7,6 +7,8 @@ import run.halo.app.extension.GVK;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -33,5 +35,12 @@ public class ShowcaseItem extends AbstractExtension {
         private Integer likes = 0;
         private Integer priority = 0;
         private Boolean published = true;
+        /**
+         * Optional template override for this item. When empty the template of the linked
+         * category is used, which keeps legacy data untouched.
+         */
+        private String template = "";
+        /** Values for category-defined custom template fields; legacy items remain valid. */
+        private Map<String, String> customFields = new LinkedHashMap<>();
     }
 }
