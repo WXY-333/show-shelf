@@ -27,6 +27,10 @@ public class ShowcasePageRouter {
                 .cacheControl(CacheControl.noCache())
                 .bodyValue(html))
             .GET("/movie/", request -> ServerResponse.permanentRedirect(java.net.URI.create("/movie")).build())
+            .GET("/movie/{item}", request -> ServerResponse.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .cacheControl(CacheControl.noCache())
+                .bodyValue(html))
             .build();
     }
 }

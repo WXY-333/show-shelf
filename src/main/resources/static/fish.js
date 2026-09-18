@@ -250,7 +250,7 @@
 
     render() {
       requestAnimationFrame(this.render);
-      if (!this.visible) return;
+      if (!this.visible || document.documentElement.classList.contains('showcase-next-detail-open')) return;
       this.controlStatus();
       this.context.clearRect(0, 0, this.width, this.height);
       this.context.fillStyle = this.color;

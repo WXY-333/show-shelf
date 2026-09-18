@@ -11,6 +11,7 @@ import run.halo.app.extension.GVK;
     plural = "showcasesettings", singular = "showcasesetting")
 public class ShowcaseSettings extends AbstractExtension {
     public static final String DEFAULT_THEME_COLOR = "#E96F9D";
+    public static final String DEFAULT_TWIKOO_JS_URL = "https://cdn.staticfile.net/twikoo/1.6.40/twikoo.all.min.js";
 
     private SettingsSpec spec = defaults();
 
@@ -23,6 +24,11 @@ public class ShowcaseSettings extends AbstractExtension {
         spec.setEffectEnabled(true);
         spec.setEffectType("sakura");
         spec.setCommentEnabled(true);
+        spec.setDetailCommentEnabled(true);
+        spec.setCommentType("halo");
+        spec.setTwikooEnvId("");
+        spec.setTwikooJsUrl(DEFAULT_TWIKOO_JS_URL);
+        spec.setCommentAnonymousEmail(false);
         spec.setSteamEnabled(false);
         spec.setHeroGifEnabled(true);
         spec.setHeroGifUrl("/plugins/showcase/assets/static/gif.gif");
@@ -39,6 +45,7 @@ public class ShowcaseSettings extends AbstractExtension {
         spec.setContentBackgroundSaturation(100);
         spec.setSignatureEnabled(true);
         spec.setSignatureText("Keep discovering beautiful stories");
+        spec.setDefaultItemPosition("end");
         return spec;
     }
 
@@ -51,6 +58,11 @@ public class ShowcaseSettings extends AbstractExtension {
         private Boolean effectEnabled;
         private String effectType;
         private Boolean commentEnabled;
+        private Boolean detailCommentEnabled;
+        private String commentType;
+        private String twikooEnvId;
+        private String twikooJsUrl;
+        private Boolean commentAnonymousEmail;
         private Boolean steamEnabled;
         private Boolean heroGifEnabled;
         private String heroGifUrl;
@@ -67,5 +79,6 @@ public class ShowcaseSettings extends AbstractExtension {
         private Integer contentBackgroundSaturation;
         private Boolean signatureEnabled;
         private String signatureText;
+        private String defaultItemPosition;
     }
 }

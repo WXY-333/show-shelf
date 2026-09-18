@@ -4,11 +4,13 @@ import com.wangxinyang.showcase.extension.ShowcaseCategory;
 import com.wangxinyang.showcase.extension.ShowcaseItem;
 import com.wangxinyang.showcase.extension.ShowcaseSettings;
 import com.wangxinyang.showcase.extension.ShowcaseSubcategory;
+import com.wangxinyang.showcase.extension.ShowcaseTemplate;
 import org.springframework.stereotype.Component;
 import run.halo.app.extension.Metadata;
 import run.halo.app.extension.ReactiveExtensionClient;
 import run.halo.app.extension.Scheme;
 import run.halo.app.extension.SchemeManager;
+import run.halo.app.extension.index.IndexSpecs;
 import run.halo.app.plugin.BasePlugin;
 import run.halo.app.plugin.PluginContext;
 
@@ -27,10 +29,35 @@ public class ShowcasePlugin extends BasePlugin {
 
     @Override
     public void start() {
-        schemeManager.register(ShowcaseItem.class);
-        schemeManager.register(ShowcaseCategory.class);
+        // Halo 2.26 requires at least one registered index for extension list
+        // queries.  These indexes also cover the predicates used by the
+        // public/admin endpoints (category, subcategory and ordering).
+        schemeManager.register(ShowcaseItem.class, indexes -> {
+            indexes.add(IndexSpecs.<ShowcaseItem, String>single("metadata.name", String.class)
+                .indexFunc(item -> item.getMetadata().getName()).unique(true).build());
+            indexes.add(IndexSpecs.<ShowcaseItem, String>single("spec.category", String.class)
+                .indexFunc(item -> item.getSpec().getCategory()).nullable(true).build());
+            indexes.add(IndexSpecs.<ShowcaseItem, String>single("spec.subcategory", String.class)
+                .indexFunc(item -> item.getSpec().getSubcategory()).nullable(true).build());
+            indexes.add(IndexSpecs.<ShowcaseItem, Integer>single("spec.priority", Integer.class)
+                .indexFunc(item -> item.getSpec().getPriority()).nullable(true).build());
+        });
+        schemeManager.register(ShowcaseCategory.class, indexes -> {
+            indexes.add(IndexSpecs.<ShowcaseCategory, String>single("metadata.name", String.class)
+                .indexFunc(category -> category.getMetadata().getName()).unique(true).build());
+            indexes.add(IndexSpecs.<ShowcaseCategory, Integer>single("spec.priority", Integer.class)
+                .indexFunc(category -> category.getSpec().getPriority()).nullable(true).build());
+        });
         schemeManager.register(ShowcaseSettings.class);
-        schemeManager.register(ShowcaseSubcategory.class);
+        schemeManager.register(ShowcaseTemplate.class, indexes -> indexes.add(IndexSpecs.<ShowcaseTemplate, String>single("metadata.name", String.class).indexFunc(template -> template.getMetadata().getName()).unique(true).build()));
+        schemeManager.register(ShowcaseSubcategory.class, indexes -> {
+            indexes.add(IndexSpecs.<ShowcaseSubcategory, String>single("metadata.name", String.class)
+                .indexFunc(subcategory -> subcategory.getMetadata().getName()).unique(true).build());
+            indexes.add(IndexSpecs.<ShowcaseSubcategory, String>single("spec.category", String.class)
+                .indexFunc(subcategory -> subcategory.getSpec().getCategory()).nullable(true).build());
+            indexes.add(IndexSpecs.<ShowcaseSubcategory, Integer>single("spec.priority", Integer.class)
+                .indexFunc(subcategory -> subcategory.getSpec().getPriority()).nullable(true).build());
+        });
         seedDefaults();
         System.out.println("Showcase plugin started. Public page: /movie");
     }
@@ -41,6 +68,7 @@ public class ShowcasePlugin extends BasePlugin {
         schemeManager.unregister(Scheme.buildFromType(ShowcaseCategory.class));
         schemeManager.unregister(Scheme.buildFromType(ShowcaseSettings.class));
         schemeManager.unregister(Scheme.buildFromType(ShowcaseSubcategory.class));
+        schemeManager.unregister(Scheme.buildFromType(ShowcaseTemplate.class));
     }
 
     private void seedDefaults() {
@@ -50,6 +78,19 @@ public class ShowcasePlugin extends BasePlugin {
         client.fetch(ShowcaseSettings.class, "showcase-settings")
             .switchIfEmpty(client.create(defaultSettings()))
             .subscribe();
+        // For built-in templates we always sync the spec with the latest preset
+        // definition so that renamed display names, icons, descriptions and
+        // field updates propagate on plugin startup. Custom user-defined
+        // templates are never touched.
+        for (var preset : PluginPresets.builtInTemplates()) {
+            client.fetch(ShowcaseTemplate.class, preset.name())
+                .flatMap(existing -> {
+                    existing.setSpec(preset.template().getSpec());
+                    return client.update(existing);
+                })
+                .switchIfEmpty(client.create(preset.template()))
+                .subscribe();
+        }
     }
 
     private ShowcaseCategory defaultAnimeCategory() {
