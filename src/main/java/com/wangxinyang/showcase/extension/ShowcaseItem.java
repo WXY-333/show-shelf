@@ -29,7 +29,7 @@ public class ShowcaseItem extends AbstractExtension {
         private String externalUrl;
         /** Short labels rendered on the lower-left corner of the cover. */
         private List<String> tags = new ArrayList<>();
-        private String status = "已看完";
+        private String status = "";
         /** Personal score from 0 to 10, with at most one decimal place. */
         private BigDecimal score = BigDecimal.ZERO;
         private Integer likes = 0;

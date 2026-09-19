@@ -158,7 +158,7 @@
         state.loading = true; state.saving = false; render();
         try {
           const [items, categories, subcategories, templates, settings] = await Promise.all([
-            request('get', '/admin/items'), request('get', '/admin/categories'), request('get', '/admin/subcategories'), request('get', '/admin/templates'), request('get', '/settings')
+            request('get', '/admin/items'), request('get', '/admin/categories'), request('get', '/admin/subcategories'), request('get', '/admin/templates'), request('get', '/admin/settings')
           ]);
           state.items = items || []; state.categories = categories || []; state.subcategories = subcategories || []; state.templates = templates || []; state.settings = { ...state.settings, ...(settings || {}) };
           reconcileExpandedGroups();
@@ -469,6 +469,9 @@
 
       function itemModalHtml() {
         if (!state.itemDraft) return '';
+        // Preserve an intentionally empty watch status in the editor. A legacy
+        // field fallback used to display "已看完" whenever the value was empty.
+        if (!String(state.itemDraft.status || '').trim()) state.itemDraft.status = ' ';
         const d = state.itemDraft; const categoryOptions = state.categories.map((category) => `<option value="${esc(category.metadata.name)}" ${d.category === category.metadata.name ? 'selected' : ''}>${esc(category.spec.icon || '')} ${esc(category.spec.displayName)}</option>`).join(''); const subcategoryOptions = state.subcategories.filter((x) => x.spec?.category === d.category).map((x) => `<option value="${esc(x.metadata.name)}" ${d.subcategory === x.metadata.name ? 'selected' : ''}>${esc(x.spec.icon || '✦')} ${esc(x.spec.displayName)}</option>`).join('');
         // Decide whether the current item belongs to the standard (动漫影视) template.
         // The Bangumi "one-click fill" importer is only relevant for 动漫影视 items, so we
@@ -1023,7 +1026,7 @@
           }
           state.itemDraft = {
             title: '', category: targetCategory, subcategory: '', cover: '', description: '', impression: '',
-            watchUrl: '', externalUrl: '', tags: [], status: '已看完', score: 0, likes: 0,
+            watchUrl: '', externalUrl: '', tags: [], status: '', score: 0, likes: 0,
             template: inheritedTemplate && inheritedTemplate !== 'standard' ? inheritedTemplate : '',
             priority: nextItemPriority(targetCategory, ''), published: true
           };
