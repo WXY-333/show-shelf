@@ -202,20 +202,30 @@ public class ShowcaseEndpoint implements CustomEndpoint {
             counters.get("totalVisitors"), counters.get("totalVisits"));
     }
 
-    private PublicPage toPublicPage(PublicSettings settings) {
-        return new PublicPage(settings.pageTitle(), settings.subtitle(), settings.ownerText(),
-            settings.themeColor(), settings.effectEnabled(), settings.effectType(),
-            settings.commentEnabled(), settings.detailCommentEnabled(), settings.commentType(),
-            settings.twikooEnvId(), settings.twikooJsUrl(), settings.commentAnonymousEmail(),
-            settings.steamEnabled() && settings.steamActive(), settings.heroGifEnabled(),
-            publicMediaUrl(settings.heroGifUrl()), settings.visitorStatsEnabled(),
-            settings.heroBackgroundEnabled(), settings.heroBackgroundType(),
-            publicMediaUrl(settings.heroBackgroundUrl()), settings.heroBackgroundOpacity(),
-            settings.heroBackgroundSaturation(), settings.contentBackgroundEnabled(),
-            settings.contentBackgroundType(), publicMediaUrl(settings.contentBackgroundUrl()),
-            settings.contentBackgroundOpacity(), settings.contentBackgroundSaturation(),
-            settings.signatureEnabled(), settings.signatureText(), settings.siteName(),
-            publicMediaUrl(settings.siteLogo()), publicMediaUrl(settings.siteFavicon()));
+    private PublicPage toPublicPage(PublicSettings publicSettings) {
+        return new PublicPage(publicSettings.pageTitle(), publicSettings.subtitle(),
+            publicSettings.ownerText(),
+            publicSettings.themeColor(), publicSettings.effectEnabled(),
+            publicSettings.effectType(),
+            publicSettings.commentEnabled(), publicSettings.detailCommentEnabled(),
+            publicSettings.commentType(),
+            publicSettings.twikooEnvId(), publicSettings.twikooJsUrl(),
+            publicSettings.commentAnonymousEmail(),
+            publicSettings.steamEnabled() && publicSettings.steamActive(),
+            publicSettings.heroGifEnabled(),
+            publicMediaUrl(publicSettings.heroGifUrl()),
+            publicSettings.visitorStatsEnabled(),
+            publicSettings.heroBackgroundEnabled(), publicSettings.heroBackgroundType(),
+            publicMediaUrl(publicSettings.heroBackgroundUrl()),
+            publicSettings.heroBackgroundOpacity(),
+            publicSettings.heroBackgroundSaturation(), publicSettings.contentBackgroundEnabled(),
+            publicSettings.contentBackgroundType(),
+            publicMediaUrl(publicSettings.contentBackgroundUrl()),
+            publicSettings.contentBackgroundOpacity(), publicSettings.contentBackgroundSaturation(),
+            publicSettings.signatureEnabled(), publicSettings.signatureText(),
+            publicSettings.siteName(),
+            publicMediaUrl(publicSettings.siteLogo()),
+            publicMediaUrl(publicSettings.siteFavicon()));
     }
 
     private Mono<PublicData> publicData() {

@@ -2,7 +2,7 @@
 
 一个面向 [Halo 2](https://github.com/halo-dev/halo) 的独立收藏展示插件，通过 **/movie** 公开展示动漫、影视、书籍、游戏及其他个人收藏。
 
-![Version](https://img.shields.io/badge/Version-1.7.2-1f6feb?style=flat-square) ![Halo](https://img.shields.io/badge/Halo-%E2%89%A5%202.23.0-0a84f7?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)
+![Version](https://img.shields.io/badge/Version-1.7.3-1f6feb?style=flat-square) ![Halo](https://img.shields.io/badge/Halo-%E2%89%A5%202.23.0-0a84f7?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)
 
 [在线演示](https://wangxinyang.top/movie) ｜ [使用教程](https://www.wangxinyang.top/archives/halo-zhan-shi-jia-da-zao-zi-ji-de-zhuan-shu-shou-cang-zhan-shi-ye-mian) ｜ [版本下载](https://github.com/WXY-333/show-shelf/releases) ｜ [问题反馈](https://github.com/WXY-333/show-shelf/issues)
 
@@ -78,6 +78,18 @@
 
 配合“Steam 信息展示”插件自动增加游戏分类，展示游戏封面、名称、累计游玩时间、最近游玩日期和 Steam 入口。依赖未安装时显示明确提示，不影响其他分类；游戏数据不会复制到展示架内容库。
 
+### 插件支持
+
+展示架与以下 Halo 插件深度集成，建议搭配使用以获得完整体验：
+
+| 插件                                                              | 说明                 |
+| --------------------------------------------------------------- | ------------------ |
+| [<img src="https://www.halo.run/upload/store-resources/plugin-comment-widget-logo.svg" width="20" height="20" align="absmiddle" alt="评论"> **Halo 官方评论组件**](https://www.halo.run/store/apps/app-YXyaD)   | 支持页面底部评论与作品详情评论  |
+| [<img src="https://app-store-static.halo.run/static/63D9507B-74A8-4DB7-BC85-6F6C8F2CCC7D.svg" width="20" height="20" align="absmiddle" alt="评论"> **评论组件 Next**](https://www.halo.run/store/apps/app-p8xona4f)   | 可切换使用增强版评论界面，与 Halo 官方评论组件共用评论数据  |
+| **Twikoo 评论系统** | 支持填写 Vercel、自建服务地址或腾讯云环境 ID，并可自定义客户端 JS 地址 |
+| [<img src="https://wangxinyang.top/upload/logo-Evax.png" width="20" height="20" align="absmiddle" alt="Steam"> **Steam 信息展示**](https://www.halo.run/store/apps/app-0ojqyzfh) | 启用后自动联动 Steam 游戏分类 |
+| [<img src="https://app-store-static.halo.run/static/DFD27313-594F-4DE6-9E23-CBFCFA069178.png?imageMogr2/thumbnail/1200x/ignore-error/1" width="20" height="20" align="absmiddle" alt="评论"> **Floating Particles 插件**](https://www.halo.run/store/apps/app-70zcsz5d) | 为Halo 前台页面添加可配置的粒子漂浮和鼠标点击动效。 |
+
 ## 系统要求
 
 - Halo 2.23.0 及以上。
@@ -87,7 +99,7 @@
 
 ## 安装与升级
 
-1. 在 Halo 应用市场搜索“展示架”或“Showcase”，或从 [Releases](https://github.com/WXY-333/show-shelf/releases) 下载 **plugin-showcase-1.7.2.jar**。
+1. 在 Halo 应用市场搜索“展示架”或“Showcase”，或从 [Releases](https://github.com/WXY-333/show-shelf/releases) 下载 **plugin-showcase-1.7.3.jar**。
 2. 进入“插件 → 安装插件”，上传 JAR 并启动展示架。
 3. 打开“内容 → 展示架”完成分类、内容和页面设置。
 4. 访问 **/movie** 查看公开页面。
@@ -148,7 +160,7 @@ Linux 或 macOS：
 
     ./gradlew clean test build --no-daemon
 
-构建产物：**build/libs/plugin-showcase-1.7.2.jar**
+构建产物：**build/libs/plugin-showcase-1.7.3.jar**
 
 ## 项目结构
 
@@ -168,9 +180,9 @@ Linux 或 macOS：
 ## 项目信息
 
 - **插件名称：** 展示架（Plugin Showcase）
-- **当前版本：** 1.7.2
+- **当前版本：** 1.7.3
 - **插件标识：** showcase
-- **作者：** Wangxinyang
+- **作者：** [Wangxinyang](https://wangxinyang.top/)
 - **贡献者：** [魔皇地狱MHDY2233](https://github.com/mhdy2233)（为本项目提供功能改进）
 - **开源协议：** MIT
 - **源码仓库：** <https://github.com/WXY-333/show-shelf>

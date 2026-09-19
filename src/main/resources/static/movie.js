@@ -80,18 +80,21 @@
   }
 
   function openDetailDialog() {
-    const useOfficialHaloOverlay = state.settings?.commentType === 'halo';
+    // Avoid `dialog.showModal()` here: it pushes the dialog into the browser's
+    // top layer, which renders above every element in the regular DOM tree,
+    // including the cursor canvas that `halo-floating-particles` (and similar
+    // plugins) attach to `document.documentElement` with a high `z-index`.
+    // Calling `dialog.show()` keeps the dialog inside the DOM tree so those
+    // cursor layers can sit on top of the dialog via their own `z-index`. The
+    // custom `.detail-dialog-backdrop` sibling provides the dim/blur overlay
+    // instead of relying on the `::backdrop` pseudo element (which is only
+    // available in modal mode).
     const useNext = state.settings?.commentType === 'haloNext';
     document.documentElement.classList.toggle('showcase-next-detail-open', useNext);
     if (useNext) pauseShowcaseMedia();
-    dialog.dataset.showcaseDialogMode = useOfficialHaloOverlay ? 'halo' : 'modal';
-    if (useOfficialHaloOverlay) {
-      detailDialogBackdrop.hidden = false;
-      dialog.show();
-    } else {
-      detailDialogBackdrop.hidden = true;
-      dialog.showModal();
-    }
+    detailDialogBackdrop.hidden = false;
+    if (!dialog.open) dialog.show();
+    registerEscapeListener();
     document.body.style.overflow = 'hidden';
   }
 
@@ -1694,6 +1697,10 @@
     const detailComments = dialog.querySelector('#detail-comments');
     const detailMount = dialog.querySelector('#detail-comment-widget');
     dialog.dataset.showcaseCommentType = state.settings.commentType || 'halo';
+    // Stamp the mount with the currently displayed item name so the live
+    // settings sync can re-mount the correct comment widget when the admin
+    // changes the comment system while the dialog is open.
+    if (detailMount && item?.metadata?.name) detailMount.dataset.showcaseItemName = item.metadata.name;
     const detailCommentsEnabled = state.settings.detailCommentEnabled !== false;
     detailComments.hidden = !detailCommentsEnabled;
     if (detailCommentsEnabled) {
@@ -1710,15 +1717,31 @@
   dialog.querySelector('.dialog-close').addEventListener('click', closeDetailDialog);
   dialog.addEventListener('click', (event) => { if (event.target === dialog) closeDetailDialog(); });
   detailDialogBackdrop.addEventListener('click', closeDetailDialog);
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && dialog.open && dialog.dataset.showcaseDialogMode === 'halo') {
-      event.preventDefault();
-      closeDetailDialog();
-    }
-  });
+  // `dialog.show()` does not auto-close on Escape (only `showModal()` does),
+  // so wire it up manually for the non-modal flow. The handler is registered
+  // lazily inside `openDetailDialog` and torn down on close, so the global
+  // document only carries the listener while the dialog is actually visible
+  // and never piggy-backs on unrelated keypresses from mobile soft keyboards
+  // or the search box.
+  let escapeListener = null;
+  const registerEscapeListener = () => {
+    if (escapeListener) return;
+    escapeListener = (event) => {
+      if (event.key === 'Escape' && dialog.open) {
+        event.preventDefault();
+        closeDetailDialog();
+      }
+    };
+    document.addEventListener('keydown', escapeListener);
+  };
+  const unregisterEscapeListener = () => {
+    if (!escapeListener) return;
+    document.removeEventListener('keydown', escapeListener);
+    escapeListener = null;
+  };
   dialog.addEventListener('close', () => {
     detailDialogBackdrop.hidden = true;
-    delete dialog.dataset.showcaseDialogMode;
+    unregisterEscapeListener();
     document.documentElement.classList.remove('showcase-next-detail-open');
     resumeShowcaseMedia();
     document.body.style.overflow = '';
