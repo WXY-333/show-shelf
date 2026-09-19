@@ -89,7 +89,9 @@ public class ShowcaseEndpoint implements CustomEndpoint {
             .GET("/items", RequestPredicates.accept(APPLICATION_JSON), request -> listItems(false))
             .GET("/categories", RequestPredicates.accept(APPLICATION_JSON), request -> listCategories(false))
             .GET("/subcategories", RequestPredicates.accept(APPLICATION_JSON), request -> listSubcategories(false))
-            .GET("/settings", RequestPredicates.accept(APPLICATION_JSON), request -> getSettings())
+            // Public settings deliberately omit secrets such as the TMDB API key.
+            .GET("/settings", RequestPredicates.accept(APPLICATION_JSON), request -> getSettings(false))
+            .GET("/admin/settings", RequestPredicates.accept(APPLICATION_JSON), request -> getSettings(true))
             .GET("/stats", RequestPredicates.accept(APPLICATION_JSON), request -> readStats())
             .POST("/stats/visit", this::recordVisit)
             .GET("/admin/items", RequestPredicates.accept(APPLICATION_JSON), request -> listItems(true))
@@ -565,7 +567,7 @@ public class ShowcaseEndpoint implements CustomEndpoint {
             .onErrorResume(this::errorResponse);
     }
 
-    private Mono<ServerResponse> getSettings() {
+    private Mono<ServerResponse> getSettings(boolean includeSecrets) {
         var showcaseSettings = client.fetch(ShowcaseSettings.class, SETTINGS_NAME)
             .map(ShowcaseSettings::getSpec)
             .map(this::normalizeSettings)
@@ -586,7 +588,23 @@ public class ShowcaseEndpoint implements CustomEndpoint {
             .defaultIfEmpty(CommentWidgetStatus.notInstalled("评论组件 Next", COMMENT_WIDGET_NEXT_PLUGIN_NAME));
         return Mono.zip(showcaseSettings, siteSettings, steamStatus, commentWidgetStatus, commentWidgetNextStatus)
             .map(tuple -> publicSettings(tuple.getT1(), tuple.getT2(), tuple.getT3(), tuple.getT4(), tuple.getT5()))
+            .map(settings -> includeSecrets ? settings : withoutSecrets(settings))
             .flatMap(this::ok);
+    }
+
+    private PublicSettings withoutSecrets(PublicSettings settings) {
+        return new PublicSettings(settings.pageTitle(), settings.subtitle(), settings.ownerText(),
+            settings.themeColor(), settings.effectEnabled(), settings.effectType(), settings.commentEnabled(),
+            settings.detailCommentEnabled(), settings.commentType(), settings.twikooEnvId(), settings.twikooJsUrl(),
+            settings.commentAnonymousEmail(), settings.steamEnabled(), settings.steamInstalled(), settings.steamActive(),
+            settings.steamMessage(), settings.heroGifEnabled(), settings.heroGifUrl(), settings.visitorStatsEnabled(),
+            settings.heroBackgroundEnabled(), settings.heroBackgroundType(), settings.heroBackgroundUrl(),
+            settings.heroBackgroundOpacity(), settings.heroBackgroundSaturation(), settings.contentBackgroundEnabled(),
+            settings.contentBackgroundType(), settings.contentBackgroundUrl(), settings.contentBackgroundOpacity(),
+            settings.contentBackgroundSaturation(), settings.signatureEnabled(), settings.signatureText(), settings.siteName(),
+            settings.siteLogo(), settings.siteFavicon(), settings.commentWidgetInstalled(), settings.commentWidgetActive(),
+            settings.commentWidgetMessage(), settings.commentWidgetNextInstalled(), settings.commentWidgetNextActive(),
+            settings.commentWidgetNextMessage(), "", settings.defaultItemPosition());
     }
 
     private PublicSettings publicSettings(ShowcaseSettings.SettingsSpec showcase,
