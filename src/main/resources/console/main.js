@@ -618,12 +618,21 @@
           persistViewMode(button.dataset.viewMode);
           render();
         }));
-        root.querySelector('#sc-item-search')?.addEventListener('input', (event) => {
-          state.itemKeyword = String(event.target.value || '').trim().toLowerCase();
+        const searchInput = root.querySelector('#sc-item-search');
+        let composing = false;
+        const updateSearch = (event) => {
+          // Rebuilding the search input during IME composition interrupts candidate selection.
+          if (composing || event.isComposing) return;
+          const keyword = String(event.target.value || '').trim().toLowerCase();
+          if (keyword === state.itemKeyword) return;
+          state.itemKeyword = keyword;
           render();
           const box = root.querySelector('#sc-item-search');
           if (box) { box.focus(); const end = box.value.length; box.setSelectionRange(end, end); }
-        });
+        };
+        searchInput?.addEventListener('compositionstart', () => { composing = true; });
+        searchInput?.addEventListener('compositionend', (event) => { composing = false; updateSearch(event); });
+        searchInput?.addEventListener('input', updateSearch);
         root.querySelector('#sc-admin-settings-form')?.addEventListener('submit', saveAdminSettings);
         root.querySelectorAll('input[name="defaultItemPosition"]').forEach((input) => input.addEventListener('change', () => {
           root.querySelectorAll('.sc-position-options label').forEach((label) => label.classList.toggle('selected', label.contains(input)));
