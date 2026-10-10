@@ -2,7 +2,7 @@
 
 一个面向 [Halo 2](https://github.com/halo-dev/halo) 的独立收藏展示插件，通过 **/movie** 公开展示动漫、影视、书籍、游戏及其他个人收藏。
 
-![Version](https://img.shields.io/badge/Version-1.7.3-1f6feb?style=flat-square) ![Halo](https://img.shields.io/badge/Halo-%E2%89%A5%202.23.0-0a84f7?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)
+![Version](https://img.shields.io/badge/Version-1.7.4-1f6feb?style=flat-square) ![Halo](https://img.shields.io/badge/Halo-%E2%89%A5%202.23.0-0a84f7?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)
 
 [在线演示](https://wangxinyang.top/movie) ｜ [使用教程](https://www.wangxinyang.top/archives/halo-zhan-shi-jia-da-zao-zi-ji-de-zhuan-shu-shou-cang-zhan-shi-ye-mian) ｜ [版本下载](https://github.com/WXY-333/show-shelf/releases) ｜ [问题反馈](https://github.com/WXY-333/show-shelf/issues)
 
@@ -41,7 +41,7 @@
 
 - 使用独立的 **/movie** 页面，不依赖当前 Halo 主题结构和样式。
 - 页面使用 Halo 原生模板渲染，支持已启用插件的 head/body 原生注入（如 Live2D），不抓取博客首页。
-- 支持分类、二级标题及标题、简介、感受、标签关键词搜索。
+- 支持分类、二级标题及标题、简介、感受、标签关键词搜索；中文拼音输入期间不会刷新搜索框或中断候选词输入。
 - 支持卡片与列表视图切换；卡片提供小、大、大大三档尺寸，默认四列布局。
 - 卡片封面保持固定比例，详情弹窗支持长内容独立滚动。
 - 外部链接先显示离站确认，降低误触风险。
@@ -99,7 +99,7 @@
 
 ## 安装与升级
 
-1. 在 Halo 应用市场搜索“展示架”或“Showcase”，或从 [Releases](https://github.com/WXY-333/show-shelf/releases) 下载 **plugin-showcase-1.7.3.jar**。
+1. 在 Halo 应用市场搜索“展示架”或“Showcase”，或从 [Releases](https://github.com/WXY-333/show-shelf/releases) 下载 **plugin-showcase-1.7.4.jar**。
 2. 进入“插件 → 安装插件”，上传 JAR 并启动展示架。
 3. 打开“内容 → 展示架”完成分类、内容和页面设置。
 4. 访问 **/movie** 查看公开页面。
@@ -160,7 +160,7 @@ Linux 或 macOS：
 
     ./gradlew clean test build --no-daemon
 
-构建产物：**build/libs/plugin-showcase-1.7.3.jar**
+构建产物：**build/libs/plugin-showcase-1.7.4.jar**
 
 ## 项目结构
 
@@ -180,7 +180,7 @@ Linux 或 macOS：
 ## 项目信息
 
 - **插件名称：** 展示架（Plugin Showcase）
-- **当前版本：** 1.7.3
+- **当前版本：** 1.7.4
 - **插件标识：** showcase
 - **作者：** [Wangxinyang](https://wangxinyang.top/)
 - **贡献者：** [魔皇地狱MHDY2233](https://github.com/mhdy2233)（为本项目提供功能改进）
