@@ -84,11 +84,11 @@
 
 | 插件                                                              | 说明                 |
 | --------------------------------------------------------------- | ------------------ |
-| [<img src="https://www.halo.run/upload/store-resources/plugin-comment-widget-logo.svg" width="20" height="20" align="absmiddle" alt="评论"> **Halo 官方评论组件**](https://www.halo.run/store/apps/app-YXyaD)   | 支持页面底部评论与作品详情评论  |
-| [<img src="https://app-store-static.halo.run/static/63D9507B-74A8-4DB7-BC85-6F6C8F2CCC7D.svg" width="20" height="20" align="absmiddle" alt="评论"> **评论组件 Next**](https://www.halo.run/store/apps/app-p8xona4f)   | 可切换使用增强版评论界面，与 Halo 官方评论组件共用评论数据  |
+| [<img src="https://wangxinyang.top/upload/%E8%AF%84%E8%AE%BA%E7%BB%84%E4%BB%B6%E5%9B%BE%E6%A0%87.png" width="20" height="20" align="absmiddle" alt="评论"> **Halo 官方评论组件**](https://www.halo.run/store/apps/app-YXyaD)   | 支持页面底部评论与作品详情评论  |
+| [<img src="https://wangxinyang.top/upload/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202026-10-14%20012334.png" width="20" height="20" align="absmiddle" alt="评论"> **评论组件 Next**](https://www.halo.run/store/apps/app-p8xona4f)   | 可切换使用增强版评论界面，与 Halo 官方评论组件共用评论数据  |
 | **Twikoo 评论系统** | 支持填写 Vercel、自建服务地址或腾讯云环境 ID，并可自定义客户端 JS 地址 |
 | [<img src="https://wangxinyang.top/upload/logo-Evax.png" width="20" height="20" align="absmiddle" alt="Steam"> **Steam 信息展示**](https://www.halo.run/store/apps/app-0ojqyzfh) | 启用后自动联动 Steam 游戏分类 |
-| [<img src="https://app-store-static.halo.run/static/DFD27313-594F-4DE6-9E23-CBFCFA069178.png?imageMogr2/thumbnail/1200x/ignore-error/1" width="20" height="20" align="absmiddle" alt="评论"> **Floating Particles 插件**](https://www.halo.run/store/apps/app-70zcsz5d) | 为 Halo 前台页面添加可配置的粒子漂浮和鼠标点击动效。 |
+| [<img src="https://wangxinyang.top/upload/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202026-10-14%20012436.png" width="20" height="20" align="absmiddle" alt="评论"> **Floating Particles 插件**](https://www.halo.run/store/apps/app-70zcsz5d) | 为 Halo 前台页面添加可配置的粒子漂浮和鼠标点击动效。 |
 
 ---
 
